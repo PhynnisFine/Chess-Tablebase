@@ -11,11 +11,24 @@ namespace Chess_Tablebase
             public static int ColToMove;
         }
 
+        public class Position
+        {
+            public int[,] board = new int[8, 8];
+            public int WhiteEval = 0;
+            public int BlackEval = 0;
+        }
+
         public frmBoard()
         {
             InitializeComponent();
         }
 
+        public int ArrayLength(int[] array)
+        {
+            int Length = 0;
+
+            return (Length);
+        }
 
         private void frmBoard_Load(object sender, EventArgs e)
         {
@@ -781,21 +794,66 @@ namespace Chess_Tablebase
             updateDisplay(myGlobals.board);
         }
 
-        private void btnGenPos_Click(object sender, EventArgs e)
+        public List<int> TableNameToPieces(string TableName)
         {
-            string TableName;
-            int[] Pieces = new int[4];     //MUST BE UPDATED IF 5 PIECE TABLEBASES ARE GENERATED
-            int piecesIndex = 0;
+            List<int> Pieces = new List<int>();
+            int colour = 8;
 
-            TableName = txtTableName.Text;
-            Pieces[0] = 14;  //add white king
-            Pieces[1] = 6;   //add black king
-            piecesIndex = 2;
+            Pieces.Add(14);  //add white king
+            Pieces.Add(6);   //add black king
 
             for (int i = 0; i < TableName.Length; i++)
             {
-
+                switch (TableName.Substring(i, 1))
+                {
+                    case "P":
+                        Pieces.Add(1 + colour);
+                        break;
+                    case "N":
+                        Pieces.Add(2 + colour);
+                        break;
+                    case "B":
+                        Pieces.Add(3 + colour);
+                        break;
+                    case "R":
+                        Pieces.Add(4 + colour);
+                        break;
+                    case "Q":
+                        Pieces.Add(5 + colour);
+                        break;
+                    case "v":
+                        colour = 0;
+                        break;
+                }
             }
+
+            MessageBox.Show("Pieces: "+ Pieces[0] + " " + Pieces[1] + " " + Pieces[2]);
+            return (Pieces);
+        }
+
+        
+        
+
+        public int GenerateAllPositions(int[] Pieces, Position[] AllPositions)
+        {
+
+
+            return (0);
+        }
+
+        private void btnGenPos_Click(object sender, EventArgs e)
+        {
+            string TableName = txtTableName.Text;
+            List<int> Pieces;
+            Position[] AllPositions = new Position[250000];
+
+            AllPositions[0] = new Position();
+
+            MessageBox.Show(Convert.ToString(AllPositions[0].board[0, 0]));
+            
+            Pieces = TableNameToPieces(TableName);
+
+            //GenerateAllPositions(Pieces, AllPositions);
         }
     }
     }
