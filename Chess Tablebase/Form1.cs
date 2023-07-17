@@ -13,9 +13,9 @@ namespace Chess_Tablebase
 
         public class Position
         {
-            public int[,] board = new int[8, 8];
-            public int WhiteEval = 0;
-            public int BlackEval = 0;
+            public int[,] board = new int[8,8];
+            public int WhiteEval=0;
+            public int BlackEval=0;
         }
 
         public frmBoard()
@@ -30,16 +30,9 @@ namespace Chess_Tablebase
             return (Length);
         }
 
+        //creates 2d array of 64 buttons when form loads (does not create buttons)
         private void frmBoard_Load(object sender, EventArgs e)
         {
-
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    myGlobals.board[i, j] = 0;
-                }
-            }
 
             myGlobals.buttonArray[0, 0] = btn0;
             myGlobals.buttonArray[0, 1] = btn1;
@@ -149,6 +142,8 @@ namespace Chess_Tablebase
 
                 }
             }
+
+            //MessageBox.Show("Updated Display");
             return 0;
         }
 
@@ -827,17 +822,140 @@ namespace Chess_Tablebase
                 }
             }
 
-            MessageBox.Show("Pieces: "+ Pieces[0] + " " + Pieces[1] + " " + Pieces[2]);
+            //MessageBox.Show("Pieces: "+ Pieces[0] + " " + Pieces[1] + " " + Pieces[2]);
             return (Pieces);
         }
 
-        
-        
-
-        public int GenerateAllPositions(int[] Pieces, Position[] AllPositions)
+        //Deep copying in c# is the absolute worst thing to exist
+        //I swear i spent about 2 hours trying to work out wtf was going wrong and trying to fix it this seems like the best solution (speed wise anyway)
+        public Position copyBoard(int[,] board)
         {
+            Position copyPos = new Position();
+            copyPos.board[0,0] = board[0,0];
+            copyPos.board[0, 1] = board[0, 1];
+            copyPos.board[0, 2] = board[0, 2];
+            copyPos.board[0, 3] = board[0, 3];
+            copyPos.board[0, 4] = board[0, 4];
+            copyPos.board[0, 5] = board[0, 5];
+            copyPos.board[0, 6] = board[0, 6];
+            copyPos.board[0, 7] = board[0, 7];
+            copyPos.board[1, 0] = board[1, 0];
+            copyPos.board[1, 1] = board[1, 1];
+            copyPos.board[1, 2] = board[1, 2];
+            copyPos.board[1, 3] = board[1, 3];
+            copyPos.board[1, 4] = board[1, 4];
+            copyPos.board[1, 5] = board[1, 5];
+            copyPos.board[1, 6] = board[1, 6];
+            copyPos.board[1, 7] = board[1, 7];
+            copyPos.board[2, 0] = board[2, 0];
+            copyPos.board[2, 1] = board[2, 1];
+            copyPos.board[2, 2] = board[2, 2];
+            copyPos.board[2, 3] = board[2, 3];
+            copyPos.board[2, 4] = board[2, 4];
+            copyPos.board[2, 5] = board[2, 5];
+            copyPos.board[2, 6] = board[2, 6];
+            copyPos.board[2, 7] = board[2, 7];
+            copyPos.board[3, 0] = board[3, 0];
+            copyPos.board[3, 1] = board[3, 1];
+            copyPos.board[3, 2] = board[3, 2];
+            copyPos.board[3, 3] = board[3, 3];
+            copyPos.board[3, 4] = board[3, 4];
+            copyPos.board[3, 5] = board[3, 5];
+            copyPos.board[3, 6] = board[3, 6];
+            copyPos.board[3, 7] = board[3, 7];
+            copyPos.board[4, 0] = board[4, 0];
+            copyPos.board[4, 1] = board[4, 1];
+            copyPos.board[4, 2] = board[4, 2];
+            copyPos.board[4, 3] = board[4, 3];
+            copyPos.board[4, 4] = board[4, 4];
+            copyPos.board[4, 5] = board[4, 5];
+            copyPos.board[4, 6] = board[4, 6];
+            copyPos.board[4, 7] = board[4, 7];
+            copyPos.board[5, 0] = board[5, 0];
+            copyPos.board[5, 1] = board[5, 1];
+            copyPos.board[5, 2] = board[5, 2];
+            copyPos.board[5, 3] = board[5, 3];
+            copyPos.board[5, 4] = board[5, 4];
+            copyPos.board[5, 5] = board[5, 5];
+            copyPos.board[5, 6] = board[5, 6];
+            copyPos.board[5, 7] = board[5, 7];
+            copyPos.board[6, 0] = board[6, 0];
+            copyPos.board[6, 1] = board[6, 1];
+            copyPos.board[6, 2] = board[6, 2];
+            copyPos.board[6, 3] = board[6, 3];
+            copyPos.board[6, 4] = board[6, 4];
+            copyPos.board[6, 5] = board[6, 5];
+            copyPos.board[6, 6] = board[6, 6];
+            copyPos.board[6, 7] = board[6, 7];
+            copyPos.board[7, 0] = board[7, 0];
+            copyPos.board[7, 1] = board[7, 1];
+            copyPos.board[7, 2] = board[7, 2];
+            copyPos.board[7, 3] = board[7, 3];
+            copyPos.board[7, 4] = board[7, 4];
+            copyPos.board[7, 5] = board[7, 5];
+            copyPos.board[7, 6] = board[7, 6];
+            copyPos.board[7, 7] = board[7, 7];
+            return (copyPos);
+        }
 
+        //MUST BE CHANGED FOR TABLES ABOVE 3 PIECES
+        public int GenerateAllPositions(List<int> Pieces, ref Position[] AllPositions)
+        {
+            int[,] board = new int[8, 8];
+            int wKing = Convert.ToInt16(Pieces[0]);
+            int bKing = Convert.ToInt16(Pieces[1]);
+            int piece = Convert.ToInt16(Pieces[2]);
+            int positionsIndex = 0;
 
+            //6 nested for loops HELLL YEEAAAH (eww)
+
+            for (int wKingY = 0; wKingY < 8; wKingY++)
+            {
+                for (int wKingX = 0; wKingX < 8; wKingX++)     //First piece (white king)
+                {
+                    board[wKingY, wKingX] = wKing;
+
+                    for (int bKingY = 0; bKingY < 8; bKingY++)
+                    {
+                        for (int bKingX = 0; bKingX < 8; bKingX++)        //2nd piece (black king), cannot touch / be on same square as white king
+                        {
+                            if (Math.Abs(bKingY - wKingY) > 1 || Math.Abs(bKingX - wKingX) > 1)
+                            {
+                                board[bKingY, bKingX] = bKing;
+
+                                for (int pieceY = 0; pieceY < 8; pieceY++)
+                                {
+                                    for (int pieceX = 0; pieceX < 8; pieceX++)      //3rd piece (any piece), cannot be on same square as other 2 pieces
+                                    {
+                                        if ((pieceY != wKingY || pieceX != wKingX) && (pieceY != bKingY || pieceX != bKingX))
+                                        {
+                                            board[pieceY, pieceX] = piece;
+
+                                            AllPositions[positionsIndex] = copyBoard(board);
+
+                                            //updateDisplay(board);
+                                            //MessageBox.Show(Convert.ToString(positionsIndex);
+
+                                            board[pieceY, pieceX] = 0;
+                                        }
+                                        positionsIndex++;
+                                    }
+                                }
+                                board[bKingY, bKingX] = 0;
+                            }
+                            else
+                            {
+                                positionsIndex += 64;
+                            }
+                        }
+                    }
+                    board[wKingY, wKingX] = 0;
+                }
+            }
+
+            updateDisplay(AllPositions[129].board);
+
+            MessageBox.Show(Convert.ToString(positionsIndex), " positions have been checked");
             return (0);
         }
 
@@ -845,15 +963,21 @@ namespace Chess_Tablebase
         {
             string TableName = txtTableName.Text;
             List<int> Pieces;
-            Position[] AllPositions = new Position[250000];
+            Position[] AllPositions = new Position[262144];    //64^3
 
-            AllPositions[0] = new Position();
+            for (int i = 0; i < AllPositions.Length; i++)
+            {
+                AllPositions[i] = new Position();
+            }
 
-            MessageBox.Show(Convert.ToString(AllPositions[0].board[0, 0]));
+            //MessageBox.Show(Convert.ToString(AllPositions[44].board[7, 1]));
             
             Pieces = TableNameToPieces(TableName);
 
-            //GenerateAllPositions(Pieces, AllPositions);
+            GenerateAllPositions(Pieces, ref AllPositions);
+
+            updateDisplay(AllPositions[20002].board);
+
         }
     }
     }
