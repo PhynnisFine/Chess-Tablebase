@@ -1,3 +1,6 @@
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
+
 namespace Chess_Tablebase
 {
     public partial class frmBoard : Form
@@ -16,6 +19,11 @@ namespace Chess_Tablebase
             public int[,] board = new int[8,8];
             public int WhiteEval=0;
             public int BlackEval=0;
+        }
+
+        public class board
+        {
+            public int[,] pos = new int[8, 8];
         }
 
         public frmBoard()
@@ -831,71 +839,29 @@ namespace Chess_Tablebase
         public Position copyBoard(int[,] board)
         {
             Position copyPos = new Position();
-            copyPos.board[0,0] = board[0,0];
-            copyPos.board[0, 1] = board[0, 1];
-            copyPos.board[0, 2] = board[0, 2];
-            copyPos.board[0, 3] = board[0, 3];
-            copyPos.board[0, 4] = board[0, 4];
-            copyPos.board[0, 5] = board[0, 5];
-            copyPos.board[0, 6] = board[0, 6];
-            copyPos.board[0, 7] = board[0, 7];
-            copyPos.board[1, 0] = board[1, 0];
-            copyPos.board[1, 1] = board[1, 1];
-            copyPos.board[1, 2] = board[1, 2];
-            copyPos.board[1, 3] = board[1, 3];
-            copyPos.board[1, 4] = board[1, 4];
-            copyPos.board[1, 5] = board[1, 5];
-            copyPos.board[1, 6] = board[1, 6];
-            copyPos.board[1, 7] = board[1, 7];
-            copyPos.board[2, 0] = board[2, 0];
-            copyPos.board[2, 1] = board[2, 1];
-            copyPos.board[2, 2] = board[2, 2];
-            copyPos.board[2, 3] = board[2, 3];
-            copyPos.board[2, 4] = board[2, 4];
-            copyPos.board[2, 5] = board[2, 5];
-            copyPos.board[2, 6] = board[2, 6];
-            copyPos.board[2, 7] = board[2, 7];
-            copyPos.board[3, 0] = board[3, 0];
-            copyPos.board[3, 1] = board[3, 1];
-            copyPos.board[3, 2] = board[3, 2];
-            copyPos.board[3, 3] = board[3, 3];
-            copyPos.board[3, 4] = board[3, 4];
-            copyPos.board[3, 5] = board[3, 5];
-            copyPos.board[3, 6] = board[3, 6];
-            copyPos.board[3, 7] = board[3, 7];
-            copyPos.board[4, 0] = board[4, 0];
-            copyPos.board[4, 1] = board[4, 1];
-            copyPos.board[4, 2] = board[4, 2];
-            copyPos.board[4, 3] = board[4, 3];
-            copyPos.board[4, 4] = board[4, 4];
-            copyPos.board[4, 5] = board[4, 5];
-            copyPos.board[4, 6] = board[4, 6];
-            copyPos.board[4, 7] = board[4, 7];
-            copyPos.board[5, 0] = board[5, 0];
-            copyPos.board[5, 1] = board[5, 1];
-            copyPos.board[5, 2] = board[5, 2];
-            copyPos.board[5, 3] = board[5, 3];
-            copyPos.board[5, 4] = board[5, 4];
-            copyPos.board[5, 5] = board[5, 5];
-            copyPos.board[5, 6] = board[5, 6];
-            copyPos.board[5, 7] = board[5, 7];
-            copyPos.board[6, 0] = board[6, 0];
-            copyPos.board[6, 1] = board[6, 1];
-            copyPos.board[6, 2] = board[6, 2];
-            copyPos.board[6, 3] = board[6, 3];
-            copyPos.board[6, 4] = board[6, 4];
-            copyPos.board[6, 5] = board[6, 5];
-            copyPos.board[6, 6] = board[6, 6];
-            copyPos.board[6, 7] = board[6, 7];
-            copyPos.board[7, 0] = board[7, 0];
-            copyPos.board[7, 1] = board[7, 1];
-            copyPos.board[7, 2] = board[7, 2];
-            copyPos.board[7, 3] = board[7, 3];
-            copyPos.board[7, 4] = board[7, 4];
-            copyPos.board[7, 5] = board[7, 5];
-            copyPos.board[7, 6] = board[7, 6];
-            copyPos.board[7, 7] = board[7, 7];
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    copyPos.board[y, x] = board[y, x];
+                }
+            }
+
             return (copyPos);
+        }
+
+        public int[,] copyPos(int[,] board)
+        {
+            int[,] copiedPos = new int[8, 8];
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    copiedPos[y, x] = board[y, x];
+                }
+            }
+
+            return copiedPos;
         }
 
         //MUST BE CHANGED FOR TABLES ABOVE 3 PIECES
@@ -931,10 +897,10 @@ namespace Chess_Tablebase
                                         {
                                             board[pieceY, pieceX] = piece;
 
-                                            AllPositions[positionsIndex] = copyBoard(board);
+                                            AllPositions[positionsIndex].board = copyPos(board);
 
                                             //updateDisplay(board);
-                                            //MessageBox.Show(Convert.ToString(positionsIndex);
+                                            //MessageBox.Show(Convert.ToString(positionsIndex));
 
                                             board[pieceY, pieceX] = 0;
                                         }
@@ -953,30 +919,384 @@ namespace Chess_Tablebase
                 }
             }
 
-            updateDisplay(AllPositions[129].board);
+            //updateDisplay(AllPositions[129].board);
 
-            MessageBox.Show(Convert.ToString(positionsIndex), " positions have been checked");
+            //MessageBox.Show(Convert.ToString(positionsIndex), " positions have been checked");
             return (0);
         }
 
+        public int[,] maskdirection(int y, int x, int ydirection, int xdirection, int[,] board, int[,] mask)
+        {
+            int d = 1;
+            int enemyKing = 6;
+            if (board[y,x] < 8)
+            {
+                enemyKing = 14;
+            }
+
+            while (x + xdirection*d > -1 && x + xdirection * d < 8 && y + ydirection*d > -1 && y + ydirection * d <8) //while still on board
+            {
+                mask[y + ydirection * d, x + xdirection * d] = 1;
+                if (board[y + ydirection * d, x + xdirection * d] == 0 || board[y + ydirection * d, x + xdirection * d] == enemyKing) //x-ray enemay king, it cant just step back 1
+                {
+                    d++;
+                }
+                else 
+                {
+                    d += 999; //how to use a goto without actually writing goto
+                }
+            }
+
+            return (mask);
+        }
+
+        public int[,] trymask(int y, int x, int ymove, int xmove, int[,] board, int[,] mask, int col)
+        {
+            if (y+ymove <8 && y +ymove >-1 && x+xmove <8 && x+xmove >-1 )
+            {
+                mask[y + ymove, x + xmove] = 1;
+            }
+
+            return (mask);
+        }
+
+        //used for finding squares that the opposite king can move to
+        public int[,] maskCol(int[,] board, string colour)
+        {
+            int[,] mask = new int[8, 8];
+            int col = 0;
+
+            if (colour == "white")
+            {
+                col = 8;
+                //else leave it as 0 for black
+            }
+
+            for (int y = 0; y<8; y++)
+            {
+                for (int x =0; x <8; x++)
+                {
+                    switch (board[y,x] - col)
+                    {
+                        case 1:
+                            //pawn
+                            mask = trymask(y, x, -1, 1, board, mask, col);
+                            mask = trymask(y, x, -1, -1, board, mask, col);
+                            break;
+                        case 2:
+                            //knight (all 8 cases considered seperately to make debugging easier, should have used a function)
+
+                            mask = trymask(y, x, 2, 1, board, mask, col);
+                            mask = trymask(y, x, 1,2, board, mask, col);
+                            mask = trymask(y, x, -2, 1, board, mask, col);
+                            mask = trymask(y, x, -1, 2, board, mask, col);
+                            mask = trymask(y, x, 2, -1, board, mask, col);
+                            mask = trymask(y, x, 1, -2, board, mask, col);
+                            mask = trymask(y, x, -2, -1, board, mask, col);
+                            mask = trymask(y, x, -1, -2, board, mask, col);
+                            break;
+                        case 3:
+                            //Bishop
+
+                            //this used to be 50 lines long, i love functions
+                            mask = maskdirection(y, x, -1, -1, board, mask);
+                            mask = maskdirection(y, x, -1, 1, board, mask);
+                            mask = maskdirection(y, x, 1, -1, board, mask);
+                            mask = maskdirection(y, x, 1, 1, board, mask);
+
+                            break;
+                        case 4:
+                            //rook
+                            mask = maskdirection(y, x, -1, 0, board, mask);
+                            mask = maskdirection(y, x, 0, -1, board, mask);
+                            mask = maskdirection(y, x, 1, 0, board, mask);
+                            mask = maskdirection(y, x, 0, 1, board, mask);
+                            break;
+
+                        case 5:
+                            //quin (ne quin ne king ne master)
+
+                            mask = maskdirection(y, x, -1, -1, board, mask);
+                            mask = maskdirection(y, x, -1, 1, board, mask);
+                            mask = maskdirection(y, x, 1, -1, board, mask);
+                            mask = maskdirection(y, x, 1, 1, board, mask);
+                            mask = maskdirection(y, x, -1, 0, board, mask);
+                            mask = maskdirection(y, x, 0, -1, board, mask);
+                            mask = maskdirection(y, x, 1, 0, board, mask);
+                            mask = maskdirection(y, x, 0, 1, board, mask);
+                            break;
+                        case 6:
+                            //king
+                            mask = trymask(y, x, 1, 1, board, mask, col);
+                            mask = trymask(y, x, 1, 0, board, mask, col);
+                            mask = trymask(y, x, 1, -1, board, mask, col);
+                            mask = trymask(y, x, 0, 1, board, mask, col);
+                            mask = trymask(y, x, 0, -1, board, mask, col);
+                            mask = trymask(y, x, -1, 1, board, mask, col);
+                            mask = trymask(y, x, -1, 0, board, mask, col);
+                            mask = trymask(y, x, -1, -1, board, mask, col);
+                            break;
+                    }
+                        
+                }
+            }
+
+            return (mask);
+        }
+
+        //used for checking if the opposite colour king can move to any of those squares (mask and checkmate functions are seperate because mask can be used for other thing)
+        public bool checkmate(int[,] board, int[,] mask, int col)
+        {
+            bool checkmate = true;
+            int kingy = 0;
+            int kingx = 0;
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (board[y,x] == 14 - col)
+                    {
+                        kingy = y;
+                        kingx = x;
+                    }
+                }
+            }
+
+            if (kingy > 0)
+            {
+                if (mask[kingy - 1, kingx] == 0) //and if that square isnt occupied by a black piece already
+                {
+                    checkmate = false;
+                }
+                if (kingx > 0)
+                {
+                    if (mask[kingy - 1, kingx - 1] == 0)
+                    {
+                        checkmate = false;
+                    }
+                }
+                if (kingx < 7)
+                {
+                    if (mask[kingy - 1, kingx + 1] == 0)
+                    {
+                        checkmate = false;
+                    }
+                }
+            }
+
+            if (kingy <7)
+            {
+                if (mask[kingy + 1, kingx] == 0)
+                {
+                    checkmate = false;
+                }
+                if (kingx > 0)
+                {
+                    if (mask[kingy + 1, kingx - 1] == 0)
+                    {
+                        checkmate = false;
+                    }
+                }
+                if (kingx < 7)
+                {
+                    if (mask[kingy + 1, kingx + 1] == 0)
+                    {
+                        checkmate = false;
+                    }
+                }
+            }
+
+            if (kingx > 0)
+            {
+                if (mask[kingy, kingx - 1] == 0)
+                {
+                    checkmate = false;
+                }
+            }
+            if (kingx <7)
+            {
+                if (mask[kingy, kingx + 1] == 0)
+                {
+                    checkmate = false;
+                }
+            }
+
+            if (mask[kingy, kingx] == 0)
+            {
+                checkmate = false;
+            }
+
+            if (checkmate)
+            {
+                //run a function that checks whether you can block or take, not required for 3 pieces
+            }
+
+            return (checkmate);
+        }
+
+        //public int allPawnMoves(pawnx, pawny, board) { } etc...
         private void btnGenPos_Click(object sender, EventArgs e)
         {
+            int cubed64 = 262144;
             string TableName = txtTableName.Text;
             List<int> Pieces;
-            Position[] AllPositions = new Position[262144];    //64^3
+            Position[] AllPositions = new Position[cubed64];    //64^3
 
             for (int i = 0; i < AllPositions.Length; i++)
             {
                 AllPositions[i] = new Position();
             }
-
-            //MessageBox.Show(Convert.ToString(AllPositions[44].board[7, 1]));
             
             Pieces = TableNameToPieces(TableName);
 
             GenerateAllPositions(Pieces, ref AllPositions);
 
-            updateDisplay(AllPositions[20002].board);
+            //find all checmates for white (+M# or 1000 stored in Black(ToMove)Eval)
+            //white should be the only side with a piece, and so the only side that can checkmate
+
+
+            List<board> MateinX = new List<board>();
+            List<board> MateinXPlus1 = new List<board>();
+            List<board> PMateinX = new List<board>(); //p for potentialMateinX
+
+            int X = 0;
+            int[,] whiteMask = new int[8, 8];
+
+            for (int i = 0; i< AllPositions.Length; i++)
+            {
+
+                //look for black king
+                bool kingfound = false;
+                for (int x = 0; x <8; x++)
+                {
+                    for (int y = 0; y < 8; y++)
+                    {
+                        if (AllPositions[i].board[y,x] == 6)
+                        {
+                            kingfound = true;
+                        }
+                    }
+                }
+
+                //if black king is found
+                if (kingfound)
+                {
+                    whiteMask = maskCol(AllPositions[i].board, "white");
+
+                    if (checkmate(AllPositions[i].board, whiteMask, 8))
+                        {
+                        //put the position in MateinX (X = 0 atm)
+                        board newBoard = new board();
+                        newBoard.pos = copyPos(AllPositions[i].board);
+                        MateinX.Add(newBoard);
+                        AllPositions[i].BlackEval = 1000 - X;
+                    }
+                }
+
+                else
+                {
+                    //see notepad doc for evaluation definitions (9999 = illegal). if black king not found, position was not generated in generating phase so its illegal
+                    AllPositions[i].WhiteEval = 9999;
+                    AllPositions[i].BlackEval = 9999;
+                }
+            }
+
+            myGlobals.board = MateinX[14].pos;
+            updateDisplay(myGlobals.board);
+
+            //now all checkmate positions have been found: undoAllMoves, UndoAllMoves, GenAllMoves, repeat
+            MessageBox.Show("The future is dangerous. Please do not go any further.");
+            MessageBox.Show("DO NOT CLICK OK!");
+            MessageBox.Show("WHY DID YOU CLICK OK?!?!!!");
+
+            while (MateinX.Count >0)
+            {
+                List<board> newPositions = new List<board>();
+                int tableIndex = 0;   //index that can be used to directly reference the position in AllPositions without searching
+                MateinXPlus1.Clear();
+                
+                for (int XIndex = 0; XIndex < MateinX.Count; XIndex++)        //add all M1 positions to MIX+1, and then update the white to move evaluations        
+                {
+                    //newPositions = UndoAllMoves(MateinX[Xindex].pos, "white")
+                    for(int i = 0; i < newPositions.Count; i++)
+                    {
+                        //MateinXPlus1 = Merge(MateinXPlus1, newPositions[i]);    //adds new position to the list if it is not there already
+                    }
+                }
+
+                MateinX.Clear();
+                PMateinX.Clear();
+                newPositions.Clear();
+
+                for (int XPlus1Index = 0; XPlus1Index < MateinXPlus1.Count; XPlus1Index++)
+                {
+                    //tableIndex = generateIndex(MateinXPlus1[XPlus1Index].pos);
+                    if (AllPositions[tableIndex].WhiteEval >= 1000 - (X+1))     //if this new evaluation is better than the old one (think shortest path algorithm)
+                    {
+                        AllPositions[tableIndex].WhiteEval = 1000 - (X + 1);
+                        //newPositions = UndoAllMoves(MateinXPlus1[XPlus1Index].pos, "black")
+                        for (int i = 0; i < newPositions.Count; i++)
+                        {
+                            //PMateinX = Merge(PMateinX, newPositions[i]);   
+                        }
+                    }
+                }
+
+                for (int PXIndex = 0; PXIndex < PMateinX.Count; PXIndex++)
+                {
+                    int bestEval = 1000 - (X + 1);
+                    bool WillAdd = true;
+
+                    //newPositions = GenerateAllMoves(PMateinX[PXIndex].pos, "black")
+
+                    for (int i = 0; i < newPositions.Count; i++)   //should be a while loop if i can be bothered (you better fucking bother future finn)
+                    {
+                        //tableIndex = generateIndex(newPositions[i].pos); 
+                        if (tableIndex < bestEval)    //if there is a better way out for black, do not add to mate in x
+                        {
+                            WillAdd = false;
+                        }
+                    }
+
+                    if (WillAdd)
+                    {
+                        //tableIndex = generateIndex(PMateinX[PXIndex].pos);
+                        AllPositions[tableIndex].WhiteEval = 1000 - (X + 2);
+                        //MateinX = Merge(MateinX, PMateinX[PXIndex]);
+                    }
+                }
+
+                X += 2;
+            }
+        }
+
+        private void btnMaskTest_Click(object sender, EventArgs e)
+        {
+            int[,] mask = new int[8, 8];
+
+            mask = maskCol(myGlobals.board, "white");
+            updateDisplay(mask);
+        }
+
+        private void btncmtest_Click(object sender, EventArgs e)
+        {
+            int[,] mask = new int[8, 8];
+            bool CM;
+
+            mask = maskCol(myGlobals.board, "white");
+
+            CM = checkmate(myGlobals.board, mask, 8);
+
+            if (CM)
+            {
+                MessageBox.Show("Checkmate, I think you'll find");
+            }
+            else
+            {
+                MessageBox.Show("nah");
+            }
+
 
         }
     }

@@ -133,6 +133,10 @@
             this.btnClearBoard = new System.Windows.Forms.Button();
             this.txtTableName = new System.Windows.Forms.TextBox();
             this.btnGenPos = new System.Windows.Forms.Button();
+            this.btnMaskTest = new System.Windows.Forms.Button();
+            this.btncmtest = new System.Windows.Forms.Button();
+            this.lblWhiteEval = new System.Windows.Forms.Label();
+            this.lblBlackEval = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -1400,12 +1404,54 @@
             this.btnGenPos.UseVisualStyleBackColor = true;
             this.btnGenPos.Click += new System.EventHandler(this.btnGenPos_Click);
             // 
+            // btnMaskTest
+            // 
+            this.btnMaskTest.Location = new System.Drawing.Point(1094, 213);
+            this.btnMaskTest.Name = "btnMaskTest";
+            this.btnMaskTest.Size = new System.Drawing.Size(122, 58);
+            this.btnMaskTest.TabIndex = 93;
+            this.btnMaskTest.Text = "Test mask";
+            this.btnMaskTest.UseVisualStyleBackColor = true;
+            this.btnMaskTest.Click += new System.EventHandler(this.btnMaskTest_Click);
+            // 
+            // btncmtest
+            // 
+            this.btncmtest.Location = new System.Drawing.Point(1089, 305);
+            this.btncmtest.Name = "btncmtest";
+            this.btncmtest.Size = new System.Drawing.Size(127, 52);
+            this.btncmtest.TabIndex = 94;
+            this.btncmtest.Text = "Test for 3 piece checkmate";
+            this.btncmtest.UseVisualStyleBackColor = true;
+            this.btncmtest.Click += new System.EventHandler(this.btncmtest_Click);
+            // 
+            // lblWhiteEval
+            // 
+            this.lblWhiteEval.AutoSize = true;
+            this.lblWhiteEval.Location = new System.Drawing.Point(1094, 153);
+            this.lblWhiteEval.Name = "lblWhiteEval";
+            this.lblWhiteEval.Size = new System.Drawing.Size(44, 15);
+            this.lblWhiteEval.TabIndex = 96;
+            this.lblWhiteEval.Text = "label18";
+            // 
+            // lblBlackEval
+            // 
+            this.lblBlackEval.AutoSize = true;
+            this.lblBlackEval.Location = new System.Drawing.Point(1094, 175);
+            this.lblBlackEval.Name = "lblBlackEval";
+            this.lblBlackEval.Size = new System.Drawing.Size(44, 15);
+            this.lblBlackEval.TabIndex = 97;
+            this.lblBlackEval.Text = "label19";
+            // 
             // frmBoard
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1248, 662);
+            this.Controls.Add(this.lblBlackEval);
+            this.Controls.Add(this.lblWhiteEval);
+            this.Controls.Add(this.btncmtest);
+            this.Controls.Add(this.btnMaskTest);
             this.Controls.Add(this.btnGenPos);
             this.Controls.Add(this.txtTableName);
             this.Controls.Add(this.btnClearBoard);
@@ -1558,5 +1604,9 @@
         private Button btnClearBoard;
         private TextBox txtTableName;
         private Button btnGenPos;
+        private Button btnMaskTest;
+        private Button btncmtest;
+        private Label lblWhiteEval;
+        private Label lblBlackEval;
     }
 }
