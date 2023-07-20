@@ -137,6 +137,11 @@
             this.btncmtest = new System.Windows.Forms.Button();
             this.lblWhiteEval = new System.Windows.Forms.Label();
             this.lblBlackEval = new System.Windows.Forms.Label();
+            this.btnIndexTest = new System.Windows.Forms.Button();
+            this.btnMovePieceTest = new System.Windows.Forms.Button();
+            this.btnCheckTest = new System.Windows.Forms.Button();
+            this.btnGen = new System.Windows.Forms.Button();
+            this.btnUndo = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -1442,12 +1447,67 @@
             this.lblBlackEval.TabIndex = 97;
             this.lblBlackEval.Text = "label19";
             // 
+            // btnIndexTest
+            // 
+            this.btnIndexTest.Location = new System.Drawing.Point(1089, 382);
+            this.btnIndexTest.Name = "btnIndexTest";
+            this.btnIndexTest.Size = new System.Drawing.Size(105, 33);
+            this.btnIndexTest.TabIndex = 98;
+            this.btnIndexTest.Text = "Table index test";
+            this.btnIndexTest.UseVisualStyleBackColor = true;
+            this.btnIndexTest.Click += new System.EventHandler(this.btnIndexTest_Click);
+            // 
+            // btnMovePieceTest
+            // 
+            this.btnMovePieceTest.Location = new System.Drawing.Point(1089, 421);
+            this.btnMovePieceTest.Name = "btnMovePieceTest";
+            this.btnMovePieceTest.Size = new System.Drawing.Size(127, 23);
+            this.btnMovePieceTest.TabIndex = 99;
+            this.btnMovePieceTest.Text = "Does board change?";
+            this.btnMovePieceTest.UseVisualStyleBackColor = true;
+            this.btnMovePieceTest.Click += new System.EventHandler(this.btnMovePieceTest_Click);
+            // 
+            // btnCheckTest
+            // 
+            this.btnCheckTest.Location = new System.Drawing.Point(1089, 450);
+            this.btnCheckTest.Name = "btnCheckTest";
+            this.btnCheckTest.Size = new System.Drawing.Size(75, 23);
+            this.btnCheckTest.TabIndex = 100;
+            this.btnCheckTest.Text = "check?";
+            this.btnCheckTest.UseVisualStyleBackColor = true;
+            this.btnCheckTest.Click += new System.EventHandler(this.btnCheckTest_Click);
+            // 
+            // btnGen
+            // 
+            this.btnGen.Location = new System.Drawing.Point(1089, 479);
+            this.btnGen.Name = "btnGen";
+            this.btnGen.Size = new System.Drawing.Size(127, 23);
+            this.btnGen.TabIndex = 101;
+            this.btnGen.Text = "Generate all moves";
+            this.btnGen.UseVisualStyleBackColor = true;
+            this.btnGen.Click += new System.EventHandler(this.btnGen_Click);
+            // 
+            // btnUndo
+            // 
+            this.btnUndo.Location = new System.Drawing.Point(1089, 505);
+            this.btnUndo.Name = "btnUndo";
+            this.btnUndo.Size = new System.Drawing.Size(127, 23);
+            this.btnUndo.TabIndex = 102;
+            this.btnUndo.Text = "Undo All Moves";
+            this.btnUndo.UseVisualStyleBackColor = true;
+            this.btnUndo.Click += new System.EventHandler(this.btnUndo_Click);
+            // 
             // frmBoard
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1248, 662);
+            this.Controls.Add(this.btnUndo);
+            this.Controls.Add(this.btnGen);
+            this.Controls.Add(this.btnCheckTest);
+            this.Controls.Add(this.btnMovePieceTest);
+            this.Controls.Add(this.btnIndexTest);
             this.Controls.Add(this.lblBlackEval);
             this.Controls.Add(this.lblWhiteEval);
             this.Controls.Add(this.btncmtest);
@@ -1608,5 +1668,10 @@
         private Button btncmtest;
         private Label lblWhiteEval;
         private Label lblBlackEval;
+        private Button btnIndexTest;
+        private Button btnMovePieceTest;
+        private Button btnCheckTest;
+        private Button btnGen;
+        private Button btnUndo;
     }
 }

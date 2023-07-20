@@ -797,6 +797,7 @@ namespace Chess_Tablebase
             updateDisplay(myGlobals.board);
         }
 
+        //takes a string like KQvK and converts it to a list of pieces
         public List<int> TableNameToPieces(string TableName)
         {
             List<int> Pieces = new List<int>();
@@ -835,7 +836,7 @@ namespace Chess_Tablebase
         }
 
         //Deep copying in c# is the absolute worst thing to exist
-        //I swear i spent about 2 hours trying to work out wtf was going wrong and trying to fix it this seems like the best solution (speed wise anyway)
+        //I swear i spent about 2 hours trying to work out wtf was going wrong and trying to fix it, this seems like the best solution (speed wise anyway)
         public Position copyBoard(int[,] board)
         {
             Position copyPos = new Position();
@@ -961,16 +962,9 @@ namespace Chess_Tablebase
         }
 
         //used for finding squares that the opposite king can move to
-        public int[,] maskCol(int[,] board, string colour)
+        public int[,] maskCol(int[,] board, int col)
         {
             int[,] mask = new int[8, 8];
-            int col = 0;
-
-            if (colour == "white")
-            {
-                col = 8;
-                //else leave it as 0 for black
-            }
 
             for (int y = 0; y<8; y++)
             {
@@ -1042,6 +1036,22 @@ namespace Chess_Tablebase
             }
 
             return (mask);
+        }
+        public int[,] maskPieces(int[,] board, int col)
+        {
+            int[,] mask = new int[8,8];
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (board[y,x] - col > 0 && board[y, x] - col < 8)
+                    {
+                        mask[y, x] = 1;
+                    }
+                }
+            }
+
+            return mask;
         }
 
         //used for checking if the opposite colour king can move to any of those squares (mask and checkmate functions are seperate because mask can be used for other thing)
@@ -1135,7 +1145,504 @@ namespace Chess_Tablebase
             return (checkmate);
         }
 
-        //public int allPawnMoves(pawnx, pawny, board) { } etc...
+        //ONLY FOR 3 PIECES genereates the index of the position in the table based on the location of pieces in the position
+        public int generateIndex(int[,] board)
+        {
+            int tableIndex = 0;
+            int squared64 = 4096;
+            List<int> pieces = new List<int> ();
+            List<int> piecePos = new List<int>();
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (board[y,x] != 0)
+                    {
+                        pieces.Add (board[y,x]);
+                        piecePos.Add(y * 8 + x);
+                    }
+                }
+            }
+
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                switch (pieces[i])
+                {
+                    case 14:
+                        tableIndex += piecePos[i] * squared64;
+                        break;
+                    case 6:
+                        tableIndex += piecePos[i] * 64;
+                        break;
+                    default:
+                        tableIndex += piecePos[i];
+                        break;
+                }
+            }
+
+            return tableIndex;
+        }
+        
+        //Combines 2 lists + prevents duplicates
+        public List<board> merge(List<board> listA, List<board> listB)
+        {
+            int itemsAdded = 0;
+            for (int i = 0; i < listB.Count; i++)
+            {
+
+                if (!listA.Contains(listB[i]))
+                {
+                    listA.Add(listB[i]);
+                    itemsAdded++;
+                }
+
+            }
+
+            //MessageBox.Show("Items added to mateinX = ", Convert.ToString(itemsAdded));
+            return listA;
+        }
+
+        //i wonder what this one does
+        public int findPiece(int[,] board, int piece)
+        {
+            int Pos = 0;
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (board[y,x] == piece)
+                    {
+                        Pos = y * 8 + x;
+                        return Pos;
+                    }
+                }
+            }
+
+                    return -1;
+        }
+
+        //checks if one side in a position is in check
+        public bool inCheck(int[,] board, int [,] mask, int col)
+        {
+            bool check = false;
+            int kingPos = findPiece(board, col + 6);
+
+            if (mask[kingPos/8, kingPos%8] == 1)
+            {
+                check = true;
+            }
+
+            return check;
+        }
+
+        //move a piece from one sqyare to another
+        public List<board> movePiece(List<board> positions,int[,] oldboard, int y1, int x1, int y2, int x2)
+        {
+            int[,] board = copyPos(oldboard);
+            board[y2, x2] = board[y1, x1];
+            board[y1, x1] = 0;
+            positions.Add(addPos(board));
+            return positions;
+        }
+
+        public board addPos(int[,] position)
+        {
+            board board = new board();
+            board.pos = copyPos(position);
+
+            return board;
+        }
+
+        //promote a pawn and output all resulting positions
+        public List<board> promote(List<board> positions, int[,] oldboard, int y1, int x1, int y2, int x2)
+        {
+            int[,] board = copyPos(oldboard);
+            int col = board[y1, x1] - 1;
+            board[y1, x1] = 0;
+            board[y2, x2] = 2 + col;
+            positions.Add(addPos(board));
+            board[y2, x2] = 3 + col;
+            positions.Add(addPos(board));
+            board[y2, x2] = 4 + col;
+            positions.Add(addPos(board));
+            board[y2, x2] = 5 + col;
+            positions.Add(addPos(board));
+
+            return positions;
+        }
+
+        public List<board> kingMoves(List<board> positions, int[,] oldboard, int[,] enemyMask, int y, int x)
+        {
+            if (y >0)
+            {
+                if (x > 0)
+                {
+                    if (enemyMask[y - 1, x - 1] == 0)
+                    {
+                        movePiece(positions, oldboard, y, x, y - 1, x - 1);
+                    }
+                }
+                if (enemyMask[y - 1, x] == 0)
+                {
+                    movePiece(positions, oldboard, y, x, y - 1, x);
+                }
+                if (x < 7)
+                {
+                    if (enemyMask[y - 1, x + 1] == 0)
+                    {
+                        movePiece(positions, oldboard, y, x, y - 1, x + 1);
+                    }
+                }
+            }
+            if (x > 0)
+            {
+                if (enemyMask[y, x - 1] == 0)
+                {
+                    movePiece(positions, oldboard, y, x, y, x - 1);
+                }
+            }
+            if (x < 7)
+            {
+                if (enemyMask[y, x + 1] == 0 && x < 7)
+                {
+                    movePiece(positions, oldboard, y, x, y, x + 1);
+                }
+            }
+
+            if (y < 7)
+            {
+                if (x > 0)
+                {
+                    if (enemyMask[y + 1, x - 1] == 0 && x < 7)
+                    {
+                        movePiece(positions, oldboard, y, x, y + 1, x - 1);
+                    }
+                }
+                if (enemyMask[y + 1, x] == 0)
+                {
+                    movePiece(positions, oldboard, y, x, y + 1, x);
+                }
+                if (x < 7)
+                {
+                    if (enemyMask[y + 1, x + 1] == 0 && x > 0)
+                    {
+                        movePiece(positions, oldboard, y, x, y + 1, x + 1);
+                    }
+                }
+            }
+
+
+            return positions;
+        }
+
+        public List<board> moveDirection(List<board> positions, int[,] board, int y, int x, int ydirection, int xdirection, int[,] ownpieces)
+        {
+            int d = 1;
+
+            while (x + xdirection * d > -1 && x + xdirection * d < 8 && y + ydirection * d > -1 && y + ydirection * d < 8 && ownpieces[y + ydirection * d, x + xdirection * d] == 0) //while still on board
+            {
+
+                positions = movePiece(positions, board, y, x, y + ydirection * d, x + xdirection * d);
+                if (board[y + ydirection * d, x + xdirection * d] == 0) 
+                {
+                    d++;
+                }
+                else
+                {
+                    d += 999; //how to use a goto without actually writing goto
+                }
+            }
+
+            return positions;
+        }
+
+        //REMEMBER TO ADD PINNED FUNCTION FOR 4+ PIECES!!
+        public List<board> GenerateAllMoves(int[,] board, string colour)
+        {
+            List<board> GeneratedPositions = new List<board>();
+            int col = 0;
+            if (colour == "white")
+            {
+                col = 8;
+            }
+            int pawnDirection = (col - 4) / 4;
+            int[,] enemyAttackMask = maskCol(board, (col +8) %16);
+            int[,] myPieceMask = maskPieces(board, col);
+            int[,] enemyPieceMask = maskPieces(board, (col + 8) % 16);
+
+            if (!inCheck(board, enemyAttackMask, col))
+            {
+
+                for (int y = 0; y < 8; y++)
+                {
+                    for (int x = 0; x < 8; x++)
+                    {
+                        switch (board[y,x] - col)
+                            {
+                            case 1:             //PAWN
+                                if ((y + pawnDirection)% 7 == 0)  //if about to promote pawn
+                                {
+                                    if (board[y + pawnDirection, x] == 0)
+                                    {
+                                        GeneratedPositions = promote(GeneratedPositions, board, y, x, y + pawnDirection, x);
+                                    }
+
+                                    if (enemyPieceMask[y + pawnDirection, x-1] ==1)   //promote + take
+                                    {
+                                        GeneratedPositions = promote(GeneratedPositions, board, y, x, y + pawnDirection, x-1);
+                                    }
+
+                                    if (enemyPieceMask[y + pawnDirection, x + 1] == 1)
+                                    {
+                                        GeneratedPositions = promote(GeneratedPositions, board, y, x, y + pawnDirection, x + 1);
+                                    }
+                                }
+
+                                if (board[y + pawnDirection, x] == 0)    //move 1 forward
+                                {
+                                    GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + pawnDirection, x);
+
+                                    if ((y + pawnDirection) % 7 == 0 && board[y + 2*pawnDirection, x] == 0)      //move 2 forward
+                                    {
+                                        GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + 2*pawnDirection, x);
+                                    }
+                                }
+                                if (x > 0)
+                                {
+                                    if (enemyPieceMask[y + pawnDirection, x - 1] == 1)       //take
+                                    {
+                                        GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + pawnDirection, x - 1);
+                                    }
+                                }
+
+                                if (x < 7)
+                                {
+                                    if (enemyPieceMask[y + pawnDirection, x + 1] == 1)
+                                    {
+                                        GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + pawnDirection, x + 1);
+                                    }
+                                }
+
+                                break;
+
+                            case 2:
+                                //kngiht (not needed until 4 pieces)
+                                break;
+                            case 3:
+                                //bishop (not needed until 4 pieces)
+                                break;
+                            case 4:      //THE ROOOOOOOOK
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, 0, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, -1, 0, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 0, 1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 0, -1, myPieceMask);
+                                break;
+                            case 5:      //THE QUEEEEEEN
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, 0, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, -1, 0, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 0, 1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 0, -1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, 1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, -1, 1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, -1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, -1, -1, myPieceMask);
+                                break;
+                            case 6: //king
+                                GeneratedPositions = kingMoves(GeneratedPositions, board, enemyAttackMask, y, x);
+                                break;
+                        }
+                    }
+                }
+
+            }
+            else
+            {
+                int kingPos = findPiece(board, col + 6);
+                int y = kingPos / 8;
+                int x = kingPos % 8;
+
+                //move
+                GeneratedPositions = kingMoves(GeneratedPositions, board, enemyAttackMask, y, x);
+
+                //take or block
+
+
+            }
+
+            return GeneratedPositions;
+        }
+
+        //needs to be updated for 4 pieces since blocking is possible
+        public bool undoMovesInCheck(int[,] board, int kingy, int kingx, int piecey, int piecex)
+        {
+            bool check = false;
+            int[,] mask = new int[8, 8];
+
+            switch (board[piecey, piecex])
+            {
+                case 1:
+                    if (kingy +1 == piecey && (kingx -1 == piecex || kingx + 1 == piecex))
+                    {
+                        check = true;
+                    }
+                    break;
+                case 9:
+                    if (kingy - 1 == piecey && (kingx - 1 == piecex || kingx + 1 == piecex))
+                    {
+                        check = true;
+                    }
+                    break;
+                case 2:
+                case 10:
+                    break;
+                case 3:
+                case 11:
+                    break;
+                case 4:
+                case 12:
+                    mask = maskdirection(piecey, piecex, -1, 0, board, mask);
+                    mask = maskdirection(piecey, piecex, 0, -1, board, mask);
+                    mask = maskdirection(piecey, piecex, 1, 0, board, mask);
+                    mask = maskdirection(piecey, piecex, 0, 1, board, mask);
+                    break;
+                case 5:
+                case 13:
+                    mask = maskdirection(piecey, piecex, -1, -1, board, mask);
+                    mask = maskdirection(piecey, piecex, -1, 1, board, mask);
+                    mask = maskdirection(piecey, piecex, 1, -1, board, mask);
+                    mask = maskdirection(piecey, piecex, 1, 1, board, mask);
+                    mask = maskdirection(piecey, piecex, -1, 0, board, mask);
+                    mask = maskdirection(piecey, piecex, 0, -1, board, mask);
+                    mask = maskdirection(piecey, piecex, 1, 0, board, mask);
+                    mask = maskdirection(piecey, piecex, 0, 1, board, mask);
+                    break;
+            }
+
+            if (mask[kingy, kingx] == 1)
+            {
+                check = true;
+            }
+
+            return check;
+        }
+
+        //moves a sliding piece in one 1 direction, checking that no checks occur
+        public List<board> undoMoveDirection(List<board> positions, int[,] board, int y, int x, int ydirection, int xdirection, int kingy, int kingx)
+        {
+            int d = 1;
+            int piece = board[y, x];
+            board[y, x] = 0;
+
+            while (x + xdirection * d > -1 && x + xdirection * d < 8 && y + ydirection * d > -1 && y + ydirection * d < 8 && board[y + ydirection * d, x + xdirection * d] == 0) //while still on board
+            {
+                board[y + ydirection * d, x +xdirection * d] = piece;
+
+                if (!undoMovesInCheck(board, kingy, kingx, y + ydirection * d, x + xdirection * d))
+                {
+                    positions.Add(addPos(board));
+                }
+
+                board[y + ydirection * d, x + xdirection * d] = 0;
+                d++;
+            }
+
+            board[y, x] = piece;
+
+            return positions;
+        }
+
+        //only requirement is not be next to enemy king, can have moved out of check
+        public List<board> undoKingMoves(List<board> positions, int[,] board, int y, int x, int enemykingy, int enemykingx)
+        {
+            if (Math.Abs(y - enemykingy) > 2 || Math.Abs(x - enemykingx) > 2)
+            {
+                for (int ychange = -1; ychange < 2; ychange++)
+                {
+                    for (int xchange = -1; xchange < 2; xchange++)
+                    {
+                        if (x + xchange > 0 && x + xchange < 8 && y + ychange > 0 && y + ychange < 8 && !(xchange ==0 && ychange ==0))
+                        {
+                            positions = movePiece(positions, board, y, x, y + ychange, x + xchange);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int ychange = -1; ychange < 2; ychange++)
+                {
+                    for (int xchange = -1; xchange < 2; xchange++)
+                    {
+                        if (x + xchange > 0 && x + xchange < 8 && y + ychange > 0 && y + ychange < 8 && !(xchange == 0 && ychange == 0))
+                        {
+                            if (Math.Abs((y + ychange) - enemykingy) > 1 || Math.Abs((x + xchange) - enemykingx) > 1)
+                            {
+                                positions = movePiece(positions, board, y, x, y + ychange, x + xchange);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return positions;
+        }
+        //essentailly the same as making all moves forward, but you cannot be chekcing the other player after your undone move
+        public List<board> UndoAllMoves(int[,] board, string colour)
+        {
+            List<board> GeneratedPositions = new List<board>();
+            int col = 0;
+            if (colour == "white")
+            {
+                col = 8;
+            }
+            int otherKingPos = findPiece(board, (col + 8) % 16 + 6);
+            int otherkingy = otherKingPos / 8;
+            int otherkingx = otherKingPos % 8;
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    switch (board[y, x] - col)
+                    {
+                        case 1:
+                            //gimme a minute
+                            break;
+                        case 2:
+                            //kngiht (not needed until 4 pieces)
+                            break;
+                        case 3:
+                            //bishop (not needed until 4 pieces)
+                            break;
+                        case 4:      //THE ROOOOOOOOK
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 1, 0, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, -1, 0, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 0, 1, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 0, -1, otherkingy, otherkingx);
+                            break;
+                        case 5:      //THE QUEEEEEEN
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 1, 0, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, -1, 0, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 0, 1, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 0, -1, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 1, 1, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, -1, 1, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 1, -1, otherkingy, otherkingx);
+                            GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, -1, -1, otherkingy, otherkingx);
+                            break;
+                        case 6: //king
+                            GeneratedPositions = undoKingMoves(GeneratedPositions, board, y, x, otherkingy, otherkingx);
+                            break;
+                    }
+                }
+            }
+
+            return GeneratedPositions;
+        }
+
+
         private void btnGenPos_Click(object sender, EventArgs e)
         {
             int cubed64 = 262144;
@@ -1162,27 +1669,15 @@ namespace Chess_Tablebase
 
             int X = 0;
             int[,] whiteMask = new int[8, 8];
-
+         
             for (int i = 0; i< AllPositions.Length; i++)
             {
-
-                //look for black king
-                bool kingfound = false;
-                for (int x = 0; x <8; x++)
-                {
-                    for (int y = 0; y < 8; y++)
-                    {
-                        if (AllPositions[i].board[y,x] == 6)
-                        {
-                            kingfound = true;
-                        }
-                    }
-                }
+                int kingPos = findPiece(AllPositions[i].board, 6);
 
                 //if black king is found
-                if (kingfound)
+                if (kingPos !=-1)
                 {
-                    whiteMask = maskCol(AllPositions[i].board, "white");
+                    whiteMask = maskCol(AllPositions[i].board, 8);
 
                     if (checkmate(AllPositions[i].board, whiteMask, 8))
                         {
@@ -1202,28 +1697,26 @@ namespace Chess_Tablebase
                 }
             }
 
-            myGlobals.board = MateinX[14].pos;
-            updateDisplay(myGlobals.board);
+            //myGlobals.board = MateinX[14].pos;
+            //updateDisplay(myGlobals.board);
 
             //now all checkmate positions have been found: undoAllMoves, UndoAllMoves, GenAllMoves, repeat
-            MessageBox.Show("The future is dangerous. Please do not go any further.");
-            MessageBox.Show("DO NOT CLICK OK!");
-            MessageBox.Show("WHY DID YOU CLICK OK?!?!!!");
 
             while (MateinX.Count >0)
             {
+                MessageBox.Show(Convert.ToString(MateinX.Count));
                 List<board> newPositions = new List<board>();
-                int tableIndex = 0;   //index that can be used to directly reference the position in AllPositions without searching
+                int tableIndex = 0;                                   //index that can be used to directly reference the position in AllPositions without searching
                 MateinXPlus1.Clear();
                 
                 for (int XIndex = 0; XIndex < MateinX.Count; XIndex++)        //add all M1 positions to MIX+1, and then update the white to move evaluations        
                 {
-                    //newPositions = UndoAllMoves(MateinX[Xindex].pos, "white")
-                    for(int i = 0; i < newPositions.Count; i++)
-                    {
-                        //MateinXPlus1 = Merge(MateinXPlus1, newPositions[i]);    //adds new position to the list if it is not there already
-                    }
+                    newPositions = UndoAllMoves(MateinX[XIndex].pos, "white");
+
+                    MateinXPlus1 = merge(MateinXPlus1, newPositions);                   
                 }
+
+                MessageBox.Show(Convert.ToString(MateinXPlus1.Count));
 
                 MateinX.Clear();
                 PMateinX.Clear();
@@ -1231,28 +1724,29 @@ namespace Chess_Tablebase
 
                 for (int XPlus1Index = 0; XPlus1Index < MateinXPlus1.Count; XPlus1Index++)
                 {
-                    //tableIndex = generateIndex(MateinXPlus1[XPlus1Index].pos);
-                    if (AllPositions[tableIndex].WhiteEval >= 1000 - (X+1))     //if this new evaluation is better than the old one (think shortest path algorithm)
+                    tableIndex = generateIndex(MateinXPlus1[XPlus1Index].pos);
+                    if (AllPositions[tableIndex].WhiteEval <= 1000 - (X+1))     //if this new evaluation is better than the old one (think shortest path algorithm)
                     {
                         AllPositions[tableIndex].WhiteEval = 1000 - (X + 1);
-                        //newPositions = UndoAllMoves(MateinXPlus1[XPlus1Index].pos, "black")
-                        for (int i = 0; i < newPositions.Count; i++)
-                        {
-                            //PMateinX = Merge(PMateinX, newPositions[i]);   
-                        }
+
+                        newPositions = UndoAllMoves(MateinXPlus1[XPlus1Index].pos, "black");
+
+                            PMateinX = merge(PMateinX, newPositions);   
                     }
                 }
+
+                MessageBox.Show(Convert.ToString(PMateinX.Count));
 
                 for (int PXIndex = 0; PXIndex < PMateinX.Count; PXIndex++)
                 {
                     int bestEval = 1000 - (X + 1);
                     bool WillAdd = true;
 
-                    //newPositions = GenerateAllMoves(PMateinX[PXIndex].pos, "black")
+                    newPositions = GenerateAllMoves(PMateinX[PXIndex].pos, "black");
 
                     for (int i = 0; i < newPositions.Count; i++)   //should be a while loop if i can be bothered (you better fucking bother future finn)
                     {
-                        //tableIndex = generateIndex(newPositions[i].pos); 
+                        tableIndex = generateIndex(newPositions[i].pos); 
                         if (tableIndex < bestEval)    //if there is a better way out for black, do not add to mate in x
                         {
                             WillAdd = false;
@@ -1261,21 +1755,32 @@ namespace Chess_Tablebase
 
                     if (WillAdd)
                     {
-                        //tableIndex = generateIndex(PMateinX[PXIndex].pos);
-                        AllPositions[tableIndex].WhiteEval = 1000 - (X + 2);
-                        //MateinX = Merge(MateinX, PMateinX[PXIndex]);
+                        tableIndex = generateIndex(PMateinX[PXIndex].pos);
+                        AllPositions[tableIndex].BlackEval = 1000 - (X + 2);
+
+                        if (!MateinX.Contains(PMateinX[PXIndex]))
+                        {
+                            MateinX.Add(PMateinX[PXIndex]);
+                        }
                     }
                 }
 
                 X += 2;
+                MessageBox.Show("Done for x = " + Convert.ToString(X));
+                MessageBox.Show(Convert.ToString(MateinX.Count));
             }
+
+            updateDisplay(AllPositions[30003].board);
+            lblBlackEval.Text = Convert.ToString(AllPositions[30003].BlackEval);
+            lblWhiteEval.Text = Convert.ToString(AllPositions[30003].WhiteEval);
         }
 
+        //-----------------TEST BUTTONS------------------------------------//
         private void btnMaskTest_Click(object sender, EventArgs e)
         {
             int[,] mask = new int[8, 8];
 
-            mask = maskCol(myGlobals.board, "white");
+            mask = maskCol(myGlobals.board, 8);
             updateDisplay(mask);
         }
 
@@ -1284,7 +1789,7 @@ namespace Chess_Tablebase
             int[,] mask = new int[8, 8];
             bool CM;
 
-            mask = maskCol(myGlobals.board, "white");
+            mask = maskCol(myGlobals.board, 8);
 
             CM = checkmate(myGlobals.board, mask, 8);
 
@@ -1299,6 +1804,66 @@ namespace Chess_Tablebase
 
 
         }
+
+        private void btnIndexTest_Click(object sender, EventArgs e)
+        {
+            int Index = generateIndex(myGlobals.board);
+
+        }
+
+        private void btnMovePieceTest_Click(object sender, EventArgs e)
+        {
+            int[,] board = myGlobals.board;
+            List<board> positions = new List<board>();
+            updateDisplay(board);
+            MessageBox.Show("1");
+
+            positions.Add(addPos(board));
+            positions = movePiece(positions, board, 0, 0, 1, 1);
+
+            updateDisplay(board);
+            MessageBox.Show("2");
+            updateDisplay(positions[1].pos);
+            MessageBox.Show("3");
+        }
+
+        private void btnCheckTest_Click(object sender, EventArgs e)
+        {
+
+            updateDisplay(myGlobals.board);
+            if (undoMovesInCheck(myGlobals.board, 2,1,1,0))
+            {
+                MessageBox.Show("Jaque!");
+            }
+            else
+            {
+                MessageBox.Show("ReallyMad, no Jaque!");
+            }
+            updateDisplay(myGlobals.board);
+        }
+
+        private void btnGen_Click(object sender, EventArgs e)
+        {
+            List<board> nextMoves = GenerateAllMoves(myGlobals.board, "white");
+
+            for (int i = 0; i < nextMoves.Count; i++)
+            {
+                updateDisplay(nextMoves[i].pos);
+                MessageBox.Show(Convert.ToString(i));
+            }
+        }
+
+        private void btnUndo_Click(object sender, EventArgs e)
+        {
+            List<board> nextMoves = UndoAllMoves(myGlobals.board, "black");
+
+            for (int i = 0; i < nextMoves.Count; i++)
+            {
+                updateDisplay(nextMoves[i].pos);
+                MessageBox.Show(Convert.ToString(i));
+            }
+        }
     }
     }
+    
     
