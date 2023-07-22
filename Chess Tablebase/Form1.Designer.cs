@@ -144,7 +144,6 @@
             this.btnUndo = new System.Windows.Forms.Button();
             this.btnCompare = new System.Windows.Forms.Button();
             this.btnUndoW = new System.Windows.Forms.Button();
-            this.lstMoveNames = new System.Windows.Forms.ListBox();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -1142,9 +1141,9 @@
             this.lstMoveEvals.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.lstMoveEvals.FormattingEnabled = true;
             this.lstMoveEvals.ItemHeight = 20;
-            this.lstMoveEvals.Location = new System.Drawing.Point(935, 120);
+            this.lstMoveEvals.Location = new System.Drawing.Point(853, 118);
             this.lstMoveEvals.Name = "lstMoveEvals";
-            this.lstMoveEvals.Size = new System.Drawing.Size(112, 504);
+            this.lstMoveEvals.Size = new System.Drawing.Size(179, 504);
             this.lstMoveEvals.TabIndex = 2;
             // 
             // btnEvaluate
@@ -1528,23 +1527,12 @@
             this.btnUndoW.UseVisualStyleBackColor = true;
             this.btnUndoW.Click += new System.EventHandler(this.btnUndoW_Click);
             // 
-            // lstMoveNames
-            // 
-            this.lstMoveNames.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.lstMoveNames.FormattingEnabled = true;
-            this.lstMoveNames.ItemHeight = 20;
-            this.lstMoveNames.Location = new System.Drawing.Point(853, 120);
-            this.lstMoveNames.Name = "lstMoveNames";
-            this.lstMoveNames.Size = new System.Drawing.Size(76, 504);
-            this.lstMoveNames.TabIndex = 105;
-            // 
             // frmBoard
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1248, 662);
-            this.Controls.Add(this.lstMoveNames);
             this.Controls.Add(this.btnUndoW);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.btnCompare);
@@ -1712,6 +1700,5 @@
         private Button btnUndo;
         private Button btnCompare;
         private Button btnUndoW;
-        private ListBox lstMoveNames;
     }
 }

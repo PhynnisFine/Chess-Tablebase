@@ -14,10 +14,11 @@ namespace Chess_Tablebase
         {
             public static Button[,] buttonArray = new Button[8, 8];
             public static int[,] board = new int[8, 8];
-            public static int selectedPiece = 0;
+            public static int selectedPiece = -1;
             public static int ColToMove = 8;
             public static List<board> givenPositions = new List<board>();
-            public static Position[] Tablebase = new Position[262144];
+            public static Position[,] Tablebase = new Position[3,262144];
+            public static int selectedSquare = -1;
         }
 
         public class Position
@@ -38,23 +39,15 @@ namespace Chess_Tablebase
             InitializeComponent();
         }
 
-        public int ArrayLength(int[] array)
-        {
-            int Length = 0;
-
-            return (Length);
-        }
-
-        //creates 2d array of button, reads tablebase from text files
-        private void frmBoard_Load(object sender, EventArgs e)
+        public int readTablebase(string filename, int tableNum)
         {
             try
             {
-                StreamReader sr = new StreamReader("KQvK.txt");
+                StreamReader sr = new StreamReader(filename);
 
-                for (int i = 0; i < myGlobals.Tablebase.Length; i++)
+                for (int i = 0; i < 262144; i++)
                 {
-                    myGlobals.Tablebase[i] = new Position();
+                    myGlobals.Tablebase[tableNum, i] = new Position();
                 }
 
                 string line = sr.ReadLine();
@@ -72,24 +65,37 @@ namespace Chess_Tablebase
                     board = FENToBoard(FEN);
 
                     tableIndex = generateIndex(board);
+
                     if (parts != null)
                     {
                         if (parts.Length == 3)
                         {
-                            myGlobals.Tablebase[tableIndex].board = copyPos(board);
-                            myGlobals.Tablebase[tableIndex].WhiteEval = Convert.ToInt16(parts[1]);
-                            myGlobals.Tablebase[tableIndex].BlackEval = Convert.ToInt16(parts[2]);
+                            myGlobals.Tablebase[tableNum, tableIndex].board = copyPos(board);
+                            myGlobals.Tablebase[tableNum, tableIndex].WhiteEval = Convert.ToInt16(parts[1]);
+                            myGlobals.Tablebase[tableNum, tableIndex].BlackEval = Convert.ToInt16(parts[2]);
                         }
                     }
 
                     line = sr.ReadLine();
                 }
-                MessageBox.Show("Finished reading tablebase from text file");
+
+                sr.Close();
             }
             catch (Exception p)
             {
                 MessageBox.Show("Exception: " + p.Message);
             }
+
+            return 0;
+        }
+
+        //creates 2d array of button, reads tablebase from text files
+        private void frmBoard_Load(object sender, EventArgs e)
+        {
+            readTablebase("KQvK.txt", 0);
+            readTablebase("KRvK.txt", 1);
+            //readTablebase("KPvK.txt", 2);
+            MessageBox.Show("Finished reading tablebase from files");
 
             myGlobals.buttonArray[0, 0] = btn0;
             myGlobals.buttonArray[0, 1] = btn1;
@@ -388,7 +394,11 @@ namespace Chess_Tablebase
                         }
                     }
                 }
-                FEN += Convert.ToString(gap);
+
+                if (gap != 0)
+                {
+                    FEN += Convert.ToString(gap);
+                }
                 FEN += "/";
             }
             FEN += " ";
@@ -417,6 +427,7 @@ namespace Chess_Tablebase
             updateDisplay(myGlobals.board);
         }
 
+        //-------------------UI Buttons (board squares + pieces)------------------------//
         private void btnWhiteToMove_Click(object sender, EventArgs e)
         {
             btnWhiteToMove.BackColor = Color.Gray;
@@ -454,6 +465,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 9;
             pieceSelected();
             btnWPawn.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnWKnight_Click(object sender, EventArgs e)
@@ -461,6 +473,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 10;
             pieceSelected();
             btnWKnight.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnWBishop_Click(object sender, EventArgs e)
@@ -468,6 +481,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 11;
             pieceSelected();
             btnWBishop.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnWRook_Click(object sender, EventArgs e)
@@ -475,6 +489,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 12;
             pieceSelected();
             btnWRook.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnWQueen_Click(object sender, EventArgs e)
@@ -482,6 +497,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 13;
             pieceSelected();
             btnWQueen.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnWKing_Click(object sender, EventArgs e)
@@ -489,6 +505,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 14;
             pieceSelected();
             btnWKing.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnBPawn_Click(object sender, EventArgs e)
@@ -496,6 +513,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 1;
             pieceSelected();
             btnBPawn.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnBKnight_Click(object sender, EventArgs e)
@@ -503,6 +521,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 2;
             pieceSelected();
             btnBKnight.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnBBishop_Click(object sender, EventArgs e)
@@ -510,6 +529,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 3;
             pieceSelected();
             btnBBishop.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnBRook_Click(object sender, EventArgs e)
@@ -517,6 +537,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 4;
             pieceSelected();
             btnBRook.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnBQueen_Click(object sender, EventArgs e)
@@ -524,6 +545,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 5;
             pieceSelected();
             btnBQueen.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
 
         private void btnBKing_Click(object sender, EventArgs e)
@@ -531,6 +553,7 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 6;
             pieceSelected();
             btnBKing.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
         }
         //should be btnDelete
         private void button1_Click(object sender, EventArgs e)
@@ -538,391 +561,445 @@ namespace Chess_Tablebase
             myGlobals.selectedPiece = 0;
             pieceSelected();
             button1.BackColor = Color.Gray;
+            myGlobals.selectedSquare = -1;
+        }
+
+        public int buttonClicked(int y,int x)
+        {
+            if (myGlobals.selectedSquare == -1)
+            {
+                if (myGlobals.selectedPiece != -1)
+                {
+                    myGlobals.board[y, x] = myGlobals.selectedPiece;
+                    updateDisplay(myGlobals.board);
+                }
+                else
+                {
+                    if (myGlobals.board[y, x] != 0)
+                    {
+                        myGlobals.selectedSquare = y * 8 + x;
+                    }
+                }
+            }
+            else
+            {
+                int piece = myGlobals.board[myGlobals.selectedSquare / 8, myGlobals.selectedSquare % 8];
+                if (myGlobals.board[y, x] == 0 || myGlobals.board[y, x] / 8 != piece / 8)
+                {
+                    myGlobals.board[y, x] = piece;
+                    myGlobals.board[myGlobals.selectedSquare / 8, myGlobals.selectedSquare % 8] = 0;
+                    updateDisplay(myGlobals.board);
+                }
+                myGlobals.selectedSquare = -1;
+            }
+
+            myGlobals.selectedPiece = -1;
+            pieceSelected();
+
+            return 0;
         }
 
         private void btn0_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 0;
+            int y = 0;
+
+            buttonClicked(y, x);
         }
 
         private void btn1_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 1;
+            int y = 0;
+            buttonClicked(y, x);
         }
 
         private void btn2_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 2;
+            int y = 0;
+            buttonClicked(y, x);
         }
 
         private void btn3_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 3;
+            int y = 0;
+            buttonClicked(y, x);
+
         }
 
         private void btn4_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 4;
+            int y = 0;
+            buttonClicked(y, x);
         }
 
         private void btn5_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 5;
+            int y = 0;
+            buttonClicked(y, x);
         }
 
         private void btn6_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 6;
+            int y = 0;
+            buttonClicked(y, x);
         }
 
         private void btn7_Click(object sender, EventArgs e)
         {
-            myGlobals.board[0, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 7;
+            int y = 0;
+            buttonClicked(y, x);
         }
 
         private void btn8_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 0;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn9_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 1;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn10_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 2;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn11_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 3;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn12_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 4;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn13_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 5;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn14_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 6;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn15_Click(object sender, EventArgs e)
         {
-            myGlobals.board[1, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 7;
+            int y = 1;
+            buttonClicked(y, x);
         }
 
         private void btn16_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 0;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn17_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 1;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn18_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 2;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn19_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 3;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn20_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 4;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn21_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 5;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn22_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 6;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn23_Click(object sender, EventArgs e)
         {
-            myGlobals.board[2, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 7;
+            int y = 2;
+            buttonClicked(y, x);
         }
 
         private void btn24_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 0;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn25_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 1;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
-        private void btn26_Click(object sender, EventArgs e)
+            private void btn26_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 2;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn27_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 3;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn28_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 4;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn29_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 5;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn30_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 6;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn31_Click(object sender, EventArgs e)
         {
-            myGlobals.board[3, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 7;
+            int y = 3;
+            buttonClicked(y, x);
         }
 
         private void btn32_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 0;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
         private void btn33_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 1;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
         private void btn34_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 2;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
         private void btn35_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 3;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
-        private void btn36_Click(object sender, EventArgs e)
+            private void btn36_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 4;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
         private void btn37_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 5;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
         private void btn38_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            int x = 6;
+            int y = 4;
+            buttonClicked(y, x);
         }
 
         private void btn39_Click(object sender, EventArgs e)
         {
-            myGlobals.board[4, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(4, 7);
         }
 
         private void btn40_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 0);
         }
 
         private void btn41_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 1);
         }
 
         private void btn42_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 2);
         }
 
         private void btn43_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 3);
         }
 
         private void btn44_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 4);
         }
 
         private void btn45_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 5);
         }
 
         private void btn46_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 6);
         }
 
         private void btn47_Click(object sender, EventArgs e)
         {
-            myGlobals.board[5, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(5, 7);
         }
 
         private void btn48_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 0);
         }
 
         private void btn49_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 1);
         }
 
         private void btn50_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 2);
         }
 
         private void btn51_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 3);
         }
 
         private void btn52_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 4);
         }
 
         private void btn53_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 5);
         }
 
         private void btn54_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 6);
         }
 
         private void btn55_Click(object sender, EventArgs e)
         {
-            myGlobals.board[6, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(6, 7);
         }
 
         private void btn56_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 0] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 0);
         }
 
         private void btn57_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 1] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 1);
         }
 
         private void btn58_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 2] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 2);
         }
 
         private void btn59_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 3] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 3);
         }
 
         private void btn60_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 4] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 4);
         }
 
         private void btn61_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 5] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 5);
         }
 
         private void btn62_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 6] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 6);
         }
 
         private void btn63_Click(object sender, EventArgs e)
         {
-            myGlobals.board[7, 7] = myGlobals.selectedPiece;
-            updateDisplay(myGlobals.board);
+            buttonClicked(7, 7);
         }
+
+        //--------------------------------Tablebase creation functions----------------------------//
 
         private void btnClearBoard_Click(object sender, EventArgs e)
         {
@@ -1284,11 +1361,12 @@ namespace Chess_Tablebase
             return (checkmate);
         }
 
-        //ONLY FOR 3 PIECES genereates the index of the position in the table based on the location of pieces in the position
+        //generates table index for one table (one set of pieces) while it is being generated
         public int generateIndex(int[,] board)
         {
             int tableIndex = 0;
             int squared64 = 4096;
+            bool bishopOrKnight = false;
             List<int> pieces = new List<int> ();
             List<int> piecePos = new List<int>();
 
@@ -1300,10 +1378,15 @@ namespace Chess_Tablebase
                     {
                         pieces.Add (board[y,x]);
                         piecePos.Add(y * 8 + x);
+                        if (board[y, x] == 2 || board[y, x] == 3 || board[y,x] == 10 || board[y,x] == 11)
+                        {
+                            bishopOrKnight = true;
+                        }
                     }
                 }
             }
-            if (piecePos.Count == 2)
+
+            if (piecePos.Count == 2 || (piecePos.Count == 3 && bishopOrKnight))
             {
                 tableIndex = -1;
             }
@@ -1327,6 +1410,41 @@ namespace Chess_Tablebase
             }
 
             return tableIndex;
+        }
+
+        //generates tablebase index (for all sets of pieces that have been generated) while a position is being searched for
+        public int[] generateTBIndex(int[,] board)
+        {
+            int[] tableBaseIndex = new int[2];
+            int tableIndex = generateIndex(board);
+            int tableNum = 0;
+
+            if (tableIndex != -1)
+            {
+                for (int y = 0; y < 8; y++)
+                {
+                    for (int x = 0; x < 8; x++)
+                    {
+                        switch (board[y,x])
+                        {
+                            case 13:
+                                tableNum = 0;
+                                break;
+                            case 12:
+                                tableNum = 1;
+                                break;
+                            case 9:
+                                tableNum = 2;
+                                break;
+                        }
+                    }
+                }
+            }
+
+            tableBaseIndex[0] = tableNum;
+            tableBaseIndex[1] = tableIndex;
+
+            return tableBaseIndex;
         }
         
         //Combines 2 lists + prevents duplicates and prevents positions being added that have a better eval already
@@ -1508,7 +1626,7 @@ namespace Chess_Tablebase
             {
                 col = 8;
             }
-            int pawnDirection = (col - 4) / 4;
+            int pawnDirection = (4-col) / 4;
             int[,] enemyAttackMask = maskCol(board, (col +8) %16);
             int[,] myPieceMask = maskPieces(board, col);
             int[,] enemyPieceMask = maskPieces(board, (col + 8) % 16);
@@ -1550,6 +1668,7 @@ namespace Chess_Tablebase
                                         GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + 2*pawnDirection, x);
                                     }
                                 }
+
                                 if (x > 0)
                                 {
                                     if (enemyPieceMask[y + pawnDirection, x - 1] == 1)       //take
@@ -1734,9 +1853,11 @@ namespace Chess_Tablebase
         {
             List<board> GeneratedPositions = new List<board>();
             int col = 0;
+            int pawndirection = 1;
             if (colour == "white")
             {
                 col = 8;
+                pawndirection = -1;
             }
             int otherKingPos = findPiece(board, (col + 8) % 16 + 6);
             int otherkingy = otherKingPos / 8;
@@ -1750,7 +1871,14 @@ namespace Chess_Tablebase
                         switch (board[y, x] - col)
                         {
                             case 1:
-                                //gimme a minute
+                            if (board[y-pawndirection, x] == 0)
+                            {
+                                GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y - pawndirection, x);
+                                if ((y - 3*pawndirection) % 7 == 0 && board[y - 2* pawndirection, x] == 0)
+                                {
+                                    GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y - 2*pawndirection, x);
+                                }
+                            }
                                 break;
                             case 2:
                                 //kngiht (not needed until 4 pieces)
@@ -1847,7 +1975,7 @@ namespace Chess_Tablebase
 
             while (MateinX.Count > 0)
             {
-                MessageBox.Show("Mate in " + Convert.ToString(X) + " positions = " + Convert.ToString(MateinX.Count));
+               MessageBox.Show("Mate in " + Convert.ToString(X) + " positions = " + Convert.ToString(MateinX.Count));
                 List<board> newPositions = new List<board>();                                 
                 MateinXPlus1.Clear();
                 
@@ -1877,7 +2005,7 @@ namespace Chess_Tablebase
 
                 }
 
-                MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
+               MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
 
                 for (int PXIndex = 0; PXIndex < PMateinX.Count; PXIndex++)
                 {
@@ -1935,6 +2063,8 @@ namespace Chess_Tablebase
                     sw.WriteLine(FEN + "," + Convert.ToString(AllPositions[i].WhiteEval) + "," + Convert.ToString(AllPositions[i].BlackEval));
                 }
             }
+            sw.Close(); 
+
             MessageBox.Show("Finished writing to file");
         }
 
@@ -2053,6 +2183,8 @@ namespace Chess_Tablebase
             }
         }
 
+        //--------------------------------UI Position Evaluation Button-----------------------//
+
         //assumes only 1 piece has moved (no castling / en pasant)
         public string moveName(int[,] board1, int[,] board2)
         {
@@ -2150,8 +2282,9 @@ namespace Chess_Tablebase
             int score;
             string[] names = new string[128];
             int[] scores = new int[128];
+            int[] tableBaseIndex;
 
-            if(myGlobals.ColToMove == 8)
+            if (myGlobals.ColToMove == 8)
             {
                 colour = "white";
             }
@@ -2162,16 +2295,17 @@ namespace Chess_Tablebase
             {
                 //updateDisplay(nextPositions[i].pos);
                 nameMove = moveName(board, nextPositions[i].pos);
+                tableBaseIndex = generateTBIndex(nextPositions[i].pos);
 
                 if (nextPositions[i].tableIndex != -1)
                 {
                     if (colour == "black")
                     {
-                        score = myGlobals.Tablebase[nextPositions[i].tableIndex].WhiteEval;
+                        score = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval;
                     }
                     else
                     {
-                        score = myGlobals.Tablebase[nextPositions[i].tableIndex].BlackEval;
+                        score = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval;
                     }
                 }
                 else
@@ -2189,7 +2323,7 @@ namespace Chess_Tablebase
             {
                 for (int j = 0; j < nextPositions.Count-1; j++)
                 {
-                    if (scores[j] < scores[j+1])
+                    if (scores[j] < scores[j + 1] && myGlobals.ColToMove == 8)
                     {
                         tempInt = scores[j];
                         scores[j] = scores[j + 1];
@@ -2198,12 +2332,23 @@ namespace Chess_Tablebase
                         names[j] = names[j + 1];
                         names[j + 1] = tempString;
                     }
+                    else if (scores[j] > scores[j + 1] && myGlobals.ColToMove == 0)
+                    {
+                        tempInt = scores[j +1];
+                        scores[j+1] = scores[j];
+                        scores[j] = tempInt;
+                        tempString = names[j+1];
+                        names[j+1] = names[j];
+                        names[j] = tempString;
+                    }
+
                 }
             }
 
+            string ToAdd;
             for (int i = 0; i < nextPositions.Count; i++)
             {
-
+                ToAdd = "";
                 switch (scores[i])
                 {
                     case 0:
@@ -2217,37 +2362,44 @@ namespace Chess_Tablebase
                         break;
                 }
 
-                lstMoveNames.Items.Add(names[i]);
-                lstMoveEvals.Items.Add(Evaluation);
-                
+                ToAdd += names[i];
+
+                for (int j = 0; j < (6 - names[i].Length); j++)
+                {
+                    ToAdd += "   ";
+                }
+
+                ToAdd += Evaluation;
+
+                lstMoveEvals.Items.Add(ToAdd);
+
             }
 
-                return 0;
+            return 0;
         }
 
         private void btnEvaluate_Click(object sender, EventArgs e)
         {
-            int tableIndex = generateIndex(myGlobals.board);
+            int[] tableBaseIndex = generateTBIndex(myGlobals.board);
             int Eval;
 
             lstMoveEvals.Items.Clear();
-            lstMoveNames.Items.Clear();
 
-            if (tableIndex != -1)
+            if (tableBaseIndex[1] != -1)
             {
-                if (myGlobals.Tablebase[tableIndex] != null)
+                if (myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]] != null)
                 {
-                    lblWhiteEval.Text = Convert.ToString(myGlobals.Tablebase[tableIndex].WhiteEval);
-                    lblBlackEval.Text = Convert.ToString(myGlobals.Tablebase[tableIndex].BlackEval);
+                    lblWhiteEval.Text = Convert.ToString(myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval);
+                    lblBlackEval.Text = Convert.ToString(myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval);
                 }
 
                 if (myGlobals.ColToMove == 8)
                 {
-                    Eval = myGlobals.Tablebase[tableIndex].WhiteEval;
+                    Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval;
                 }
                 else
                 {
-                    Eval = myGlobals.Tablebase[tableIndex].BlackEval;
+                    Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval;
                 }
 
                 switch (Eval)
