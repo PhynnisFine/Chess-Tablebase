@@ -1143,7 +1143,7 @@
             this.lstMoveEvals.ItemHeight = 20;
             this.lstMoveEvals.Location = new System.Drawing.Point(853, 118);
             this.lstMoveEvals.Name = "lstMoveEvals";
-            this.lstMoveEvals.Size = new System.Drawing.Size(179, 504);
+            this.lstMoveEvals.Size = new System.Drawing.Size(208, 504);
             this.lstMoveEvals.TabIndex = 2;
             // 
             // btnEvaluate

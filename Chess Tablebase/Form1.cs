@@ -19,6 +19,7 @@ namespace Chess_Tablebase
             public static List<board> givenPositions = new List<board>();
             public static Position[,] Tablebase = new Position[3,262144];
             public static int selectedSquare = -1;
+            public static string[] tables = new string[] { "KQvK, KRvK, KPvK" };
         }
 
         public class Position
@@ -94,7 +95,7 @@ namespace Chess_Tablebase
         {
             readTablebase("KQvK.txt", 0);
             readTablebase("KRvK.txt", 1);
-            //readTablebase("KPvK.txt", 2);
+            readTablebase("KPvK.txt", 2);
             MessageBox.Show("Finished reading tablebase from files");
 
             myGlobals.buttonArray[0, 0] = btn0;
@@ -1051,6 +1052,29 @@ namespace Chess_Tablebase
             return (Pieces);
         }
 
+        public string PiecesToTableName(List<int> Pieces)
+        {
+            string tableName = "";
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                if (Pieces[i] > 8)
+                {
+                    tableName += pieceNumToString(Pieces[i]);
+                }
+            }
+
+            tableName += "v";
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                if (Pieces[i] < 8)
+                {
+                    tableName += pieceNumToString(Pieces[i]+8);
+                }
+            }
+
+            return tableName;
+        }
+
         //Deep copying in c# is the absolute worst thing to exist
         //I swear i spent about 2 hours trying to work out wtf was going wrong and trying to fix it, this seems like the best solution (speed wise anyway)
         public Position copyBoard(int[,] board)
@@ -1105,24 +1129,51 @@ namespace Chess_Tablebase
                             if (Math.Abs(bKingY - wKingY) > 1 || Math.Abs(bKingX - wKingX) > 1)
                             {
                                 board[bKingY, bKingX] = bKing;
-
-                                for (int pieceY = 0; pieceY < 8; pieceY++)
+                                if (piece != 9 && piece != 1)  //if piece is not a pawn
                                 {
-                                    for (int pieceX = 0; pieceX < 8; pieceX++)      //3rd piece (any piece), cannot be on same square as other 2 pieces
+                                    for (int pieceY = 0; pieceY < 8; pieceY++)
                                     {
-                                        if ((pieceY != wKingY || pieceX != wKingX) && (pieceY != bKingY || pieceX != bKingX))
+                                        for (int pieceX = 0; pieceX < 8; pieceX++)      //3rd piece (any piece), cannot be on same square as other 2 pieces
                                         {
-                                            board[pieceY, pieceX] = piece;
+                                            if ((pieceY != wKingY || pieceX != wKingX) && (pieceY != bKingY || pieceX != bKingX))
+                                            {
+                                                board[pieceY, pieceX] = piece;
 
-                                            AllPositions[positionsIndex].board = copyPos(board);
+                                                AllPositions[positionsIndex].board = copyPos(board);
 
-                                            //updateDisplay(board);
-                                            //MessageBox.Show(Convert.ToString(positionsIndex));
+                                                //updateDisplay(board);
+                                                //MessageBox.Show(Convert.ToString(positionsIndex));
 
-                                            board[pieceY, pieceX] = 0;
+                                                board[pieceY, pieceX] = 0;
+
+                                            }
+
+                                            positionsIndex++;
                                         }
-                                        positionsIndex++;
                                     }
+                                }
+                                else 
+                                {
+                                    positionsIndex += 8;
+                                    for (int pieceY = 1; pieceY < 7; pieceY++)
+                                    {
+                                        for (int pieceX = 0; pieceX < 8; pieceX++) 
+                                        {
+                                            if ((pieceY != wKingY || pieceX != wKingX) && (pieceY != bKingY || pieceX != bKingX))
+                                            {
+                                                board[pieceY, pieceX] = piece;
+
+                                                AllPositions[positionsIndex].board = copyPos(board);
+
+                                                //updateDisplay(board);
+                                                //MessageBox.Show(Convert.ToString(positionsIndex));
+
+                                                board[pieceY, pieceX] = 0;
+                                            }
+                                            positionsIndex++;
+                                        }
+                                    }
+                                    positionsIndex += 8;
                                 }
                                 board[bKingY, bKingX] = 0;
                             }
@@ -1181,6 +1232,7 @@ namespace Chess_Tablebase
         public int[,] maskCol(int[,] board, int col)
         {
             int[,] mask = new int[8, 8];
+            int pawnDirection = (4 - col) / 4;
 
             for (int y = 0; y<8; y++)
             {
@@ -1190,8 +1242,8 @@ namespace Chess_Tablebase
                     {
                         case 1:
                             //pawn
-                            mask = trymask(y, x, -1, 1, board, mask, col);
-                            mask = trymask(y, x, -1, -1, board, mask, col);
+                            mask = trymask(y, x, pawnDirection, 1, board, mask, col);
+                            mask = trymask(y, x, pawnDirection, -1, board, mask, col);
                             break;
                         case 2:
                             //knight (all 8 cases considered seperately to make debugging easier, should have used a function)
@@ -1629,7 +1681,6 @@ namespace Chess_Tablebase
             int pawnDirection = (4-col) / 4;
             int[,] enemyAttackMask = maskCol(board, (col +8) %16);
             int[,] myPieceMask = maskPieces(board, col);
-            int[,] enemyPieceMask = maskPieces(board, (col + 8) % 16);
 
             if (!inCheck(board, enemyAttackMask, col))
             {
@@ -1641,6 +1692,8 @@ namespace Chess_Tablebase
                         switch (board[y,x] - col)
                             {
                             case 1:             //PAWN
+                                int[,] enemyPieceMask = maskPieces(board, (col + 8) % 16);
+
                                 if ((y + pawnDirection)% 7 == 0)  //if about to promote pawn
                                 {
                                     if (board[y + pawnDirection, x] == 0)
@@ -1658,12 +1711,11 @@ namespace Chess_Tablebase
                                         GeneratedPositions = promote(GeneratedPositions, board, y, x, y + pawnDirection, x + 1);
                                     }
                                 }
-
-                                if (board[y + pawnDirection, x] == 0)    //move 1 forward
+                                else if (board[y + pawnDirection, x] == 0)    //move 1 forward
                                 {
                                     GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + pawnDirection, x);
 
-                                    if ((y + pawnDirection) % 7 == 0 && board[y + 2*pawnDirection, x] == 0)      //move 2 forward
+                                    if ((y - pawnDirection) % 7 == 0 && board[y + 2*pawnDirection, x] == 0)      //move 2 forward
                                     {
                                         GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y + 2*pawnDirection, x);
                                     }
@@ -1873,9 +1925,16 @@ namespace Chess_Tablebase
                             case 1:
                             if (board[y-pawndirection, x] == 0)
                             {
-                                GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y - pawndirection, x);
+                                if (!(otherkingy - (y - pawndirection) == -1 && Math.Abs(otherkingx - x) == 1)) //if you are not putting the other king in check (should make an undo move function if i need to use it for knights)
+                                    {
+                                    GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y - pawndirection, x);
+                                }
                                 if ((y - 3*pawndirection) % 7 == 0 && board[y - 2* pawndirection, x] == 0)
                                 {
+                                    if (!(otherkingy - (y - 2*pawndirection) == -1 && Math.Abs(otherkingx - x) == 1))
+                                    {
+                                        GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y - pawndirection, x);
+                                    }
                                     GeneratedPositions = movePiece(GeneratedPositions, board, y, x, y - 2*pawndirection, x);
                                 }
                             }
@@ -1917,33 +1976,165 @@ namespace Chess_Tablebase
             return GeneratedPositions;
         }
 
+        public Position[] GenerateMovesToTable(Position[] allPositions, List<int> Pieces, int startPiece, int endPiece, int col)
+        {
+            string tableName = PiecesToTableName(Pieces);
+            int tableNum = 0;
+            int tableIndex = 0;
 
+            for (int i = 0; i < myGlobals.tables.Length; i++)
+            {
+                if(tableName == myGlobals.tables[i])
+                {
+                    tableNum = i;
+                }
+            }
+
+            if (endPiece != 0)   //promote pawn
+            {
+                int pawnDirection = (4 - col) / 4;
+
+                for (int i = 0; i < allPositions.Length; i++)
+                {
+                    if (allPositions[i].WhiteEval != 9999)
+                    {
+                        for (int y = 0; y < 8; y++)
+                        {
+                            for (int x = 0; x < 8; x++)
+                            {
+                                if (allPositions[i].board[y, x] == startPiece)
+                                {
+                                    if ((y + pawnDirection) % 7 == 0 && allPositions[i].board[y + pawnDirection, x] == 0)   //does not yet consider capture promotions
+                                    {
+                                        if (x == 0)
+                                        {
+                                            if (allPositions[i].board[y + pawnDirection, x + 1] != 6)
+                                            {
+                                                //updateDisplay(allPositions[i].board);
+                                                //MessageBox.Show("hi");
+
+                                                allPositions[i].board[y, x] = 0;
+                                                allPositions[i].board[y + pawnDirection, x] = endPiece;
+                                                tableIndex = generateIndex(allPositions[i].board);
+
+                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval != 0 && col == 8)
+                                                {
+                                                    allPositions[i].WhiteEval = myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1;
+                                                    //updateDisplay(allPositions[i].board);
+                                                   // MessageBox.Show(Convert.ToString(allPositions[i].WhiteEval));
+                                                }
+
+                                                allPositions[i].board[y, x] = startPiece;
+                                                allPositions[i].board[y + pawnDirection, x] = 0;
+                                            }
+                                        }
+                                        else if (x == 7)
+                                        {
+                                            if (allPositions[i].board[y + pawnDirection, x - 1] != 6)
+                                            {
+                                                allPositions[i].board[y, x] = 0;
+                                                allPositions[i].board[y + pawnDirection, x] = endPiece;
+                                                tableIndex = generateIndex(allPositions[i].board);
+
+                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval != 0 && col == 8)
+                                                {
+                                                    allPositions[i].WhiteEval = myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1;
+                                                }
+
+                                                allPositions[i].board[y, x] = startPiece;
+                                                allPositions[i].board[y + pawnDirection, x] = 0;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (allPositions[i].board[y + pawnDirection, x + 1] != 6 && allPositions[i].board[y + pawnDirection, x - 1] != 6)
+                                            {
+
+                                                allPositions[i].board[y, x] = 0;
+                                                allPositions[i].board[y + pawnDirection, x] = endPiece;
+                                                tableIndex = generateIndex(allPositions[i].board);
+
+                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval != 0 && col == 8)
+                                                {
+                                                    allPositions[i].WhiteEval = myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1;
+                                                }
+
+                                                allPositions[i].board[y, x] = startPiece;
+                                                allPositions[i].board[y + pawnDirection, x] = 0;
+                                            }
+                                        }
+                                        
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else     //take start piece
+            {
+
+            }
+
+            return allPositions;
+        }
+
+        public List<board> findAllMIX(Position[] allPositions, int x)
+        {
+            List<board> MIXPositions = new List<board> ();
+
+            if (x % 2 == 0)
+            {
+                for (int i = 0; i < allPositions.Length; i++)
+                {
+                    if (allPositions[i].BlackEval == 1000 - x)
+                    {
+                        MIXPositions.Add(addPos(allPositions[i].board));
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < allPositions.Length; i++)
+                {
+                    if (allPositions[i].WhiteEval == 1000 - x)
+                    {
+                        MIXPositions.Add(addPos(allPositions[i].board));
+                    }
+                }
+            }
+
+            return MIXPositions;
+        }
         private void btnGenPos_Click(object sender, EventArgs e)
         {
             int cubed64 = 262144;
             string TableName = txtTableName.Text;
             List<int> Pieces;
-            Position[] AllPositions = new Position[cubed64];    //64^3          
+            Position[] AllPositions = new Position[cubed64];    //64^3
+            List<board> MateinX = new List<board>();
+            List<board> MateinXPlus1 = new List<board>();
+            List<board> PMateinX = new List<board>(); //p for potentialMateinX
+            bool dependencies = false;
+            bool foundAny = false;
+
+            int X = 0;
+            int[,] whiteMask = new int[8, 8];
 
             for (int i = 0; i < AllPositions.Length; i++)
             {
                 AllPositions[i] = new Position();
             }
 
+            //generate all positions for the given table (set of pieces)
+
             Pieces = TableNameToPieces(TableName);
 
             GenerateAllPositions(Pieces, ref AllPositions);
 
             //find all checmates for white (+M# or 1000 stored in Black(ToMove)Eval)
-            //white should be the only side with a piece, and so the only side that can checkmate
-
-
-            List<board> MateinX = new List<board>();
-            List<board> MateinXPlus1 = new List<board>();
-            List<board> PMateinX = new List<board>(); //p for potentialMateinX
-
-            int X = 0;
-            int[,] whiteMask = new int[8, 8];
+            //white should be the only side with a piece (for 3 pieces), and so the only side that can checkmate
          
             for (int i = 0; i< AllPositions.Length; i++)
             {
@@ -1959,6 +2150,7 @@ namespace Chess_Tablebase
                         //put the position in MateinX (X = 0 atm)
                         
                         MateinX.Add(addPos(AllPositions[i].board));
+                        foundAny = true;
                         AllPositions[i].BlackEval = 1000;
                         
                     }
@@ -1971,19 +2163,60 @@ namespace Chess_Tablebase
                 }
             }
 
-            //now all checkmate positions have been found: undoAllMoves, UndoAllMoves, GenAllMoves, repeat
+            //work out which dependencies are relevant and GenerateMovesToTable
 
-            while (MateinX.Count > 0)
+            int startPiece = 0;
+            int endPiece = 0;
+
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                switch (Pieces[i])
+                {
+                    case 9:
+                        dependencies = true;
+                        startPiece = Pieces[i];
+                        endPiece = 13;
+                        Pieces[i] = endPiece;
+                        AllPositions = GenerateMovesToTable(AllPositions, Pieces, startPiece, endPiece, 8);
+                        endPiece = 12;
+                        Pieces[i] = endPiece;
+                        AllPositions = GenerateMovesToTable(AllPositions, Pieces, startPiece, endPiece, 8);
+                        if (Pieces.Count > 3)
+                        {
+                            //do same for bishop and knight
+                        }
+                        Pieces[i] = startPiece;
+                        break;
+                    //all other cases are just one piece gets taken
+
+                }
+            }
+
+
+            //now all winning positions have been found: undoAllMoves, UndoAllMoves, GenAllMoves, repeat
+
+            while (MateinX.Count > 0 || !foundAny)
             {
                MessageBox.Show("Mate in " + Convert.ToString(X) + " positions = " + Convert.ToString(MateinX.Count));
                 List<board> newPositions = new List<board>();                                 
                 MateinXPlus1.Clear();
-                
+
+                if (dependencies)
+                {
+                    MateinXPlus1 = findAllMIX(AllPositions, X + 1);
+                }
+
+
                 for (int XIndex = 0; XIndex < MateinX.Count; XIndex++)        //add all M1 positions to MIX+1, and then update the white to move evaluations        
                 {
                     newPositions = UndoAllMoves(MateinX[XIndex].pos, "white");
 
                     MateinXPlus1 = merge(MateinXPlus1, newPositions, AllPositions, 8);                   
+                }
+
+              if (MateinXPlus1.Count != 0 && !foundAny)
+                {
+                    foundAny = true;
                 }
 
                 MessageBox.Show("Mate in " + Convert.ToString(X+1) + " positions = " + Convert.ToString(MateinXPlus1.Count));
@@ -2002,10 +2235,14 @@ namespace Chess_Tablebase
 
                             PMateinX = merge(PMateinX, newPositions, AllPositions, 0);
                     }
-
                 }
 
                MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
+
+                if (dependencies)
+                {
+                    MateinX = findAllMIX(AllPositions, X + 2);
+                }
 
                 for (int PXIndex = 0; PXIndex < PMateinX.Count; PXIndex++)
                 {
@@ -2044,15 +2281,18 @@ namespace Chess_Tablebase
                         }                 
                 }
 
+                if (MateinX.Count != 0 && !foundAny)
+                {
+                    foundAny = true;
+                }
+
                 X += 2;
                MessageBox.Show("Done for x = " + Convert.ToString(X));
             }
 
-            updateDisplay(AllPositions[46753].board);
-            lblBlackEval.Text = Convert.ToString(AllPositions[30003].BlackEval);
-            lblWhiteEval.Text = Convert.ToString(AllPositions[30003].WhiteEval);
+            //find all invalid positions (positions where the side that is not about to move is in check)
 
-            StreamWriter sw = new StreamWriter("KRvK.txt");
+            StreamWriter sw = new StreamWriter("KPvK.txt");
             string FEN = "";
 
             for (int i = 0; i < AllPositions.Length; i++)
@@ -2066,6 +2306,7 @@ namespace Chess_Tablebase
             sw.Close(); 
 
             MessageBox.Show("Finished writing to file");
+            updateDisplay(myGlobals.board);
         }
 
         //-----------------TEST BUTTONS------------------------------------//
@@ -2201,6 +2442,7 @@ namespace Chess_Tablebase
             int finaly = 0;
             int piece = 0;
             string pieceLetter;
+            int[,] mask;
 
             for (int y = 0; y < 8; y++)
             {
@@ -2228,13 +2470,45 @@ namespace Chess_Tablebase
                 finalx = x2;
                 finaly = y2;
             }
-            else
+            else if (board1[y2, x2] == board2[y1, x1] && board2[y1, x1] != 0)
             {
                 startx = x2;
                 starty = y2;
                 finalx = x1;
                 finaly = y1;
             }
+            //pawn was promoted (FUNCTION ENDS IN THIS ELSE{}, sorry about the goto END)
+            else
+            {
+               if (board2[y2, x2] != 0)
+                {
+                    startx = x1;
+                    starty = y1;
+                    finaly = y2;
+                    finalx = x2;
+                    Name += columns[finalx] + Convert.ToString(8 - finaly);
+                }
+                else
+                {
+                    startx = x2;
+                    starty = y2;
+                    finalx = x1;
+                    finaly = y1;
+                    Name += columns[finalx] + Convert.ToString(8 - finaly);
+                }
+                Name += "=";
+                Name += pieceNumToString(board2[finaly, finalx]);
+
+                col = (board2[finaly, finalx] / 8) * 8;
+                mask = maskCol(board2, (col + 8) % 16);
+
+                if (inCheck(board2, mask, (col + 8) % 16))
+                {
+                    Name += "+";
+                }
+                return Name;
+            }
+
 
 
                 piece = board2[finaly, finalx];
@@ -2265,7 +2539,7 @@ namespace Chess_Tablebase
 
                 Name += columns[finalx] + Convert.ToString(8 - finaly); //add final position of piece
 
-            int[,] mask = maskCol(board2, col);
+            mask = maskCol(board2, col);
 
                     if (inCheck(board2, mask, (col + 8) % 16))
                     {
@@ -2310,7 +2584,7 @@ namespace Chess_Tablebase
                 }
                 else
                 {
-                    score = 0;
+                    score = -1;
                 }
                 names[i] = nameMove;
                 scores[i] = score;
@@ -2319,7 +2593,7 @@ namespace Chess_Tablebase
             int tempInt;
             string tempString;
 
-            for (int i = 0; i < nextPositions.Count-2; i++)   //bubble sort OMEGALUL
+            for (int i = 0; i < nextPositions.Count-1; i++)   //bubble sort OMEGALUL
             {
                 for (int j = 0; j < nextPositions.Count-1; j++)
                 {
@@ -2351,6 +2625,9 @@ namespace Chess_Tablebase
                 ToAdd = "";
                 switch (scores[i])
                 {
+                    case -1:
+                        Evaluation = "Insufficient Material";
+                        break;
                     case 0:
                         Evaluation = "Draw";
                         break;
@@ -2406,6 +2683,7 @@ namespace Chess_Tablebase
                 {
                     case 0:
                         lblEval.Text = "Draw / illegal position";
+                        displayMoves(myGlobals.board);
                         break;
                     case 1000:
                         lblEval.Text = "White won by checkmate";
