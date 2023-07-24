@@ -19,7 +19,7 @@ namespace Chess_Tablebase
             public static List<board> givenPositions = new List<board>();
             public static Position[,] Tablebase = new Position[3,262144];
             public static int selectedSquare = -1;
-            public static string[] tables = new string[] { "KQvK, KRvK, KPvK" };
+            public static string[] tables = new string[] {"KQvK", "KRvK", "KPvK" };
         }
 
         public class Position
@@ -49,6 +49,8 @@ namespace Chess_Tablebase
                 for (int i = 0; i < 262144; i++)
                 {
                     myGlobals.Tablebase[tableNum, i] = new Position();
+                    myGlobals.Tablebase[tableNum, i].WhiteEval = 9999;
+                    myGlobals.Tablebase[tableNum, i].BlackEval = 9999;
                 }
 
                 string line = sr.ReadLine();
@@ -1228,6 +1230,20 @@ namespace Chess_Tablebase
             return (mask);
         }
 
+        public List<board> tryMove(List<board> Positions, int[,] oldboard, int y, int x, int ychange, int xchange, int col)
+        {
+            int[,] board = copyPos(oldboard);
+
+            if (y+ychange >=0 && y + ychange <=7 && x+xchange >=0 && x+xchange <=7 && board[y + ychange, x + xchange] == 0)
+            {
+                board[y + ychange, x + xchange] = board[y, x];
+                board[y, x] = 0;
+                Positions.Add(addPos(board));
+            }
+
+                return Positions;
+        }
+
         //used for finding squares that the opposite king can move to
         public int[,] maskCol(int[,] board, int col)
         {
@@ -1586,9 +1602,12 @@ namespace Chess_Tablebase
             bool check = false;
             int kingPos = findPiece(board, col + 6);
 
-            if (mask[kingPos/8, kingPos%8] == 1)
+            if (kingPos != -1)
             {
-                check = true;
+                if (mask[kingPos / 8, kingPos % 8] == 1)
+                {
+                    check = true;
+                }
             }
 
             return check;
@@ -1644,7 +1663,6 @@ namespace Chess_Tablebase
                     }
                 }
             }
-
             return positions;
         }
 
@@ -1740,10 +1758,22 @@ namespace Chess_Tablebase
                                 break;
 
                             case 2:
-                                //kngiht (not needed until 4 pieces)
+                                //knight (not needed until 4 pieces)
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, 2, 1, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, 1, 2, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, -2, 1, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, -1, 2, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, 2, -1, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, 1, -2, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, -2, -1, col);
+                                GeneratedPositions = tryMove(GeneratedPositions, board, y, x, -1, -2, col);
                                 break;
                             case 3:
                                 //bishop (not needed until 4 pieces)
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, 1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, -1, 1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, -1, myPieceMask);
+                                GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, -1, -1, myPieceMask);
                                 break;
                             case 4:      //THE ROOOOOOOOK
                                 GeneratedPositions = moveDirection(GeneratedPositions, board, y, x, 1, 0, myPieceMask);
@@ -1865,8 +1895,8 @@ namespace Chess_Tablebase
             return positions;
         }
 
-        //only requirement is not be next to enemy king, can have moved out of check
-        public List<board> undoKingMoves(List<board> positions, int[,] board, int y, int x, int enemykingy, int enemykingx)
+        //only requirement is not be next to enemy king *(and not to reveal a check) **(and to block checks), can move out of check
+        public List<board> undoKingMoves(List<board> positions, int[,] board, int y, int x, int enemykingy, int enemykingx, int col)
         {
             if (Math.Abs(y - enemykingy) > 2 || Math.Abs(x - enemykingx) > 2)
             {
@@ -1876,7 +1906,16 @@ namespace Chess_Tablebase
                     {
                         if (x + xchange > -1 && x + xchange < 8 && y + ychange > -1 && y + ychange < 8 && !(xchange ==0 && ychange ==0) && board[y + ychange, x + xchange] == 0)
                         {
-                            positions = movePiece(positions, board, y, x, y + ychange, x + xchange);
+                                int[,] newboard = copyPos(board);
+                                newboard[y + ychange, x + xchange] = newboard[y, x];
+                                newboard[y, x] = 0;
+                                int[,] newMask = maskCol(newboard, col);
+
+                                if (!inCheck(newboard, newMask, (col + 8) % 16))
+                                    {
+                                    positions.Add(addPos(newboard));
+                                }
+                            
                         }
                     }
                 }
@@ -1891,7 +1930,15 @@ namespace Chess_Tablebase
                         {
                             if (Math.Abs((y + ychange) - enemykingy) > 1 || Math.Abs((x + xchange) - enemykingx) > 1)
                             {
-                                positions = movePiece(positions, board, y, x, y + ychange, x + xchange);
+                                int[,] newboard = copyPos(board);
+                                newboard[y + ychange, x + xchange] = newboard[y, x];
+                                newboard[y, x] = 0;
+                                int[,] newMask = maskCol(newboard, col);
+
+                                if (!inCheck(newboard, newMask, (col + 8) % 16))
+                                {
+                                    positions.Add(addPos(newboard));
+                                }
                             }
                         }
                     }
@@ -1901,6 +1948,7 @@ namespace Chess_Tablebase
         }
         //essentailly the same as making all moves forward, but you cannot be chekcing the other player after your undone move
         //assumes you are not in check to start with
+        //Very definitely needs recoding if i ever work on this again
         public List<board> UndoAllMoves(int[,] board, string colour)
         {
             List<board> GeneratedPositions = new List<board>();
@@ -1961,11 +2009,9 @@ namespace Chess_Tablebase
                                 GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, 1, -1, otherkingy, otherkingx);
                                 GeneratedPositions = undoMoveDirection(GeneratedPositions, board, y, x, -1, -1, otherkingy, otherkingx);
                                 break;
-                            case 6: //king
-                            if (!inCheck(board, attackMask, (col + 8) % 16))
-                            {
-                                GeneratedPositions = undoKingMoves(GeneratedPositions, board, y, x, otherkingy, otherkingx);
-                            }
+                            case 6: //king (can do blocking moves even if other king already in check)
+                                GeneratedPositions = undoKingMoves(GeneratedPositions, board, y, x, otherkingy, otherkingx, col);
+
                                 break;
                         }
                     }
@@ -2010,22 +2056,29 @@ namespace Chess_Tablebase
                                         {
                                             if (allPositions[i].board[y + pawnDirection, x + 1] != 6)
                                             {
-                                                //updateDisplay(allPositions[i].board);
-                                                //MessageBox.Show("hi");
-
                                                 allPositions[i].board[y, x] = 0;
                                                 allPositions[i].board[y + pawnDirection, x] = endPiece;
                                                 tableIndex = generateIndex(allPositions[i].board);
 
-                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval != 0 && col == 8)
+                                                if (tableIndex == 98818)
+                                                {
+                                                    updateDisplay(allPositions[i].board);
+                                                    MessageBox.Show(Convert.ToString(allPositions[i].WhiteEval));
+                                                    MessageBox.Show(Convert.ToString(myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1));
+                                                }
+
+                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1 > allPositions[i].WhiteEval && col == 8)
                                                 {
                                                     allPositions[i].WhiteEval = myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1;
-                                                    //updateDisplay(allPositions[i].board);
-                                                   // MessageBox.Show(Convert.ToString(allPositions[i].WhiteEval));
+                                                    if (endPiece == 12)
+                                                    {
+                                                        MessageBox.Show("damn");
+                                                    }
                                                 }
 
                                                 allPositions[i].board[y, x] = startPiece;
                                                 allPositions[i].board[y + pawnDirection, x] = 0;
+
                                             }
                                         }
                                         else if (x == 7)
@@ -2036,10 +2089,11 @@ namespace Chess_Tablebase
                                                 allPositions[i].board[y + pawnDirection, x] = endPiece;
                                                 tableIndex = generateIndex(allPositions[i].board);
 
-                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval != 0 && col == 8)
+                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1 > allPositions[i].WhiteEval && col == 8)
                                                 {
                                                     allPositions[i].WhiteEval = myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1;
                                                 }
+
 
                                                 allPositions[i].board[y, x] = startPiece;
                                                 allPositions[i].board[y + pawnDirection, x] = 0;
@@ -2054,10 +2108,12 @@ namespace Chess_Tablebase
                                                 allPositions[i].board[y + pawnDirection, x] = endPiece;
                                                 tableIndex = generateIndex(allPositions[i].board);
 
-                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval != 0 && col == 8)
+
+                                                if (myGlobals.Tablebase[tableNum, tableIndex].BlackEval-1  > allPositions[i].WhiteEval && col == 8)
                                                 {
                                                     allPositions[i].WhiteEval = myGlobals.Tablebase[tableNum, tableIndex].BlackEval - 1;
                                                 }
+
 
                                                 allPositions[i].board[y, x] = startPiece;
                                                 allPositions[i].board[y + pawnDirection, x] = 0;
@@ -2133,9 +2189,30 @@ namespace Chess_Tablebase
 
             GenerateAllPositions(Pieces, ref AllPositions);
 
+            //find all invalid positions (positions where the side that is not about to move is in check)
+
+            int[,] Wmask;
+            int[,] Bmask;
+            for (int i = 0; i < AllPositions.Length; i++)
+            {
+                Wmask = maskCol(AllPositions[i].board, 8);
+                Bmask = maskCol(AllPositions[i].board, 0);
+
+                if (inCheck(AllPositions[i].board, Wmask, 0))
+                {
+                    AllPositions[i].WhiteEval = 9999;
+                    //updateDisplay(AllPositions[i].board);
+                    //MessageBox.Show("white to move");
+                }
+                if (inCheck(AllPositions[i].board, Bmask, 8))
+                {
+                    AllPositions[i].BlackEval = 9999;
+                }
+            }
+
             //find all checmates for white (+M# or 1000 stored in Black(ToMove)Eval)
             //white should be the only side with a piece (for 3 pieces), and so the only side that can checkmate
-         
+
             for (int i = 0; i< AllPositions.Length; i++)
             {
                 int kingPos = findPiece(AllPositions[i].board, 6);
@@ -2197,7 +2274,7 @@ namespace Chess_Tablebase
 
             while (MateinX.Count > 0 || !foundAny)
             {
-               MessageBox.Show("Mate in " + Convert.ToString(X) + " positions = " + Convert.ToString(MateinX.Count));
+                //MessageBox.Show("Mate in " + Convert.ToString(X) + " positions = " + Convert.ToString(MateinX.Count));
                 List<board> newPositions = new List<board>();                                 
                 MateinXPlus1.Clear();
 
@@ -2219,7 +2296,7 @@ namespace Chess_Tablebase
                     foundAny = true;
                 }
 
-                MessageBox.Show("Mate in " + Convert.ToString(X+1) + " positions = " + Convert.ToString(MateinXPlus1.Count));
+                //MessageBox.Show("Mate in " + Convert.ToString(X+1) + " positions = " + Convert.ToString(MateinXPlus1.Count));
 
                 MateinX.Clear();
                 PMateinX.Clear();
@@ -2237,7 +2314,7 @@ namespace Chess_Tablebase
                     }
                 }
 
-               MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
+              //MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
 
                 if (dependencies)
                 {
@@ -2274,9 +2351,9 @@ namespace Chess_Tablebase
                             {
                                 MateinX.Add(PMateinX[PXIndex]);
                                 AllPositions[PMateinX[PXIndex].tableIndex].BlackEval = 1000 - (X + 2);
-                            updateDisplay(AllPositions[PMateinX[PXIndex].tableIndex].board);
-                            lblBlackEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].BlackEval);
-                            lblWhiteEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].WhiteEval);
+                            //updateDisplay(AllPositions[PMateinX[PXIndex].tableIndex].board);
+                            //lblBlackEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].BlackEval);
+                            //lblWhiteEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].WhiteEval);
                         }
                         }                 
                 }
@@ -2287,17 +2364,18 @@ namespace Chess_Tablebase
                 }
 
                 X += 2;
-               MessageBox.Show("Done for x = " + Convert.ToString(X));
+               //MessageBox.Show("Done for x = " + Convert.ToString(X));
             }
 
-            //find all invalid positions (positions where the side that is not about to move is in check)
 
-            StreamWriter sw = new StreamWriter("KPvK.txt");
+            //write to file
+
+            StreamWriter sw = new StreamWriter(TableName + ".txt");
             string FEN = "";
 
             for (int i = 0; i < AllPositions.Length; i++)
             {
-                if (AllPositions[i].WhiteEval != 9999)
+                if (AllPositions[i].BlackEval != 9999 || AllPositions[i].WhiteEval != 9999)
                 {
                     FEN = BoardToFEN(AllPositions[i].board);
                     sw.WriteLine(FEN + "," + Convert.ToString(AllPositions[i].WhiteEval) + "," + Convert.ToString(AllPositions[i].BlackEval));
@@ -2365,7 +2443,8 @@ namespace Chess_Tablebase
         {
 
             updateDisplay(myGlobals.board);
-            if (undoMovesInCheck(myGlobals.board, 2,1,1,0))
+            int[,] mask = maskCol(myGlobals.board, 8);
+            if (inCheck(myGlobals.board, mask, 0))
             {
                 MessageBox.Show("Jaque!");
             }
@@ -2378,7 +2457,7 @@ namespace Chess_Tablebase
 
         private void btnGen_Click(object sender, EventArgs e)
         {
-            List<board> nextMoves = GenerateAllMoves(myGlobals.board, "black");
+            List<board> nextMoves = GenerateAllMoves(myGlobals.board, "white");
 
             for (int i = 0; i < nextMoves.Count; i++)
             {
@@ -2427,6 +2506,20 @@ namespace Chess_Tablebase
         //--------------------------------UI Position Evaluation Button-----------------------//
 
         //assumes only 1 piece has moved (no castling / en pasant)
+        public int[,] flip(int[,] board)
+        {
+            int[,] flippedBoard = new int[8, 8];
+
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    flippedBoard[7 - y, x] = (board[y, x] + 8) % 16;
+                }
+            }
+
+            return flippedBoard;
+        }
         public string moveName(int[,] board1, int[,] board2)
         {
             string[] columns = new string[] { "a", "b", "c", "d", "e", "f", "g", "h", };
@@ -2548,7 +2641,7 @@ namespace Chess_Tablebase
 
             return Name;
         }
-        public int displayMoves(int[,] board)
+        public int displayMoves(int[,] board, bool flip)
         {
             string colour = "black";
             string nameMove = "";
@@ -2557,6 +2650,11 @@ namespace Chess_Tablebase
             string[] names = new string[128];
             int[] scores = new int[128];
             int[] tableBaseIndex;
+            int flipValue = 1;
+            if(flip)
+            {
+                flipValue = -1;
+            }
 
             if (myGlobals.ColToMove == 8)
             {
@@ -2587,7 +2685,7 @@ namespace Chess_Tablebase
                     score = -1;
                 }
                 names[i] = nameMove;
-                scores[i] = score;
+                scores[i] = score*flipValue;
             }
 
             int tempInt;
@@ -2606,7 +2704,7 @@ namespace Chess_Tablebase
                         names[j] = names[j + 1];
                         names[j + 1] = tempString;
                     }
-                    else if (scores[j] > scores[j + 1] && myGlobals.ColToMove == 0)
+                    else
                     {
                         tempInt = scores[j +1];
                         scores[j+1] = scores[j];
@@ -2657,50 +2755,85 @@ namespace Chess_Tablebase
 
         private void btnEvaluate_Click(object sender, EventArgs e)
         {
-            int[] tableBaseIndex = generateTBIndex(myGlobals.board);
+            bool flipBoard = false;
+            int[] tableBaseIndex;
             int Eval;
+            int[,] board = copyPos(myGlobals.board);
 
+
+            for (int y = 0; y <8; y++)
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    if (board[y,x] < 8 && board[y,x] != 0 && board[y, x]!=6)
+                    {
+                        flipBoard = true;
+                    }
+                }
+            }
+
+            if (flipBoard)
+            {
+                board = flip(board);        //board flip= board   (rather than board += board)
+            }
+
+                tableBaseIndex = generateTBIndex(board);
+
+
+            //MessageBox.Show(Convert.ToString(tableBaseIndex[1]));
             lstMoveEvals.Items.Clear();
 
             if (tableBaseIndex[1] != -1)
             {
-                if (myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]] != null)
+                if (myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval != 9999 || myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval != 9999)
                 {
                     lblWhiteEval.Text = Convert.ToString(myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval);
                     lblBlackEval.Text = Convert.ToString(myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval);
-                }
-
-                if (myGlobals.ColToMove == 8)
-                {
-                    Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval;
+                    if (myGlobals.ColToMove == 8)
+                    {
+                        Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval;
+                    }
+                    else
+                    {
+                        Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval;
+                    }
                 }
                 else
                 {
-                    Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval;
+                    Eval = 9999;
                 }
+
 
                 switch (Eval)
                 {
                     case 0:
-                        lblEval.Text = "Draw / illegal position";
-                        displayMoves(myGlobals.board);
+                        lblEval.Text = "Draw";
+                        displayMoves(myGlobals.board, flipBoard);
                         break;
                     case 1000:
                         lblEval.Text = "White won by checkmate";
                         break;
                     case 9999:
-                        lblEval.Text = "Illegal position";
+                    case -9999:
+                        lblEval.Text = "Invalid position";
                         break;
                     default:
-                        lblEval.Text = "White is winning:    DTM " + Convert.ToString(1000 - Eval);
-                        displayMoves(myGlobals.board);
-
+                        if (Eval > 0)
+                        {
+                            lblEval.Text = "White is winning:    DTM " + Convert.ToString(1000 - Eval);
+                        }
+                        else
+                        {
+                            lblEval.Text = "Black is winning:    DTM " + Convert.ToString(Eval + 1000);
+                        }
+                        displayMoves(myGlobals.board, flipBoard);
                         break;
                 }
             }
             else
             {
                 lblEval.Text = "Draw by insufficient material";
+                displayMoves(myGlobals.board, flipBoard);
             }
 
 
