@@ -95,6 +95,7 @@ namespace Chess_Tablebase
         //creates 2d array of button, reads tablebase from text files
         private void frmBoard_Load(object sender, EventArgs e)
         {
+            myGlobals.ColToMove = 0;
             readTablebase("KQvK.txt", 0);
             readTablebase("KRvK.txt", 1);
             readTablebase("KPvK.txt", 2);
@@ -2641,7 +2642,7 @@ namespace Chess_Tablebase
 
             return Name;
         }
-        public int displayMoves(int[,] board, bool flip)
+        public int displayMoves(int[,] board)
         {
             string colour = "black";
             string nameMove = "";
@@ -2650,11 +2651,6 @@ namespace Chess_Tablebase
             string[] names = new string[128];
             int[] scores = new int[128];
             int[] tableBaseIndex;
-            int flipValue = 1;
-            if(flip)
-            {
-                flipValue = -1;
-            }
 
             if (myGlobals.ColToMove == 8)
             {
@@ -2685,11 +2681,13 @@ namespace Chess_Tablebase
                     score = -1;
                 }
                 names[i] = nameMove;
-                scores[i] = score*flipValue;
+                scores[i] = score;
             }
 
             int tempInt;
             string tempString;
+
+            MessageBox.Show(Convert.ToString(nextPositions.Count));
 
             for (int i = 0; i < nextPositions.Count-1; i++)   //bubble sort OMEGALUL
             {
@@ -2697,6 +2695,7 @@ namespace Chess_Tablebase
                 {
                     if (scores[j] < scores[j + 1] && myGlobals.ColToMove == 8)
                     {
+
                         tempInt = scores[j];
                         scores[j] = scores[j + 1];
                         scores[j + 1] = tempInt;
@@ -2704,7 +2703,7 @@ namespace Chess_Tablebase
                         names[j] = names[j + 1];
                         names[j + 1] = tempString;
                     }
-                    else
+                    else if (scores[j+1] < scores[j] && myGlobals.ColToMove == 0)
                     {
                         tempInt = scores[j +1];
                         scores[j+1] = scores[j];
@@ -2718,6 +2717,7 @@ namespace Chess_Tablebase
             }
 
             string ToAdd;
+
             for (int i = 0; i < nextPositions.Count; i++)
             {
                 ToAdd = "";
@@ -2747,7 +2747,6 @@ namespace Chess_Tablebase
                 ToAdd += Evaluation;
 
                 lstMoveEvals.Items.Add(ToAdd);
-
             }
 
             return 0;
@@ -2774,13 +2773,13 @@ namespace Chess_Tablebase
 
             if (flipBoard)
             {
-                board = flip(board);        //board flip= board   (rather than board += board)
+                MessageBox.Show("x");
+                board = flip(board);        
             }
 
                 tableBaseIndex = generateTBIndex(board);
 
 
-            //MessageBox.Show(Convert.ToString(tableBaseIndex[1]));
             lstMoveEvals.Items.Clear();
 
             if (tableBaseIndex[1] != -1)
@@ -2808,7 +2807,7 @@ namespace Chess_Tablebase
                 {
                     case 0:
                         lblEval.Text = "Draw";
-                        displayMoves(myGlobals.board, flipBoard);
+                        displayMoves(myGlobals.board);
                         break;
                     case 1000:
                         lblEval.Text = "White won by checkmate";
@@ -2826,14 +2825,14 @@ namespace Chess_Tablebase
                         {
                             lblEval.Text = "Black is winning:    DTM " + Convert.ToString(Eval + 1000);
                         }
-                        displayMoves(myGlobals.board, flipBoard);
+                        displayMoves(myGlobals.board);
                         break;
                 }
             }
             else
             {
                 lblEval.Text = "Draw by insufficient material";
-                displayMoves(myGlobals.board, flipBoard);
+                displayMoves(myGlobals.board);
             }
 
 
