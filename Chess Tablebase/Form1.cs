@@ -1443,7 +1443,7 @@ namespace Chess_Tablebase
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (board[y,x] != 0)
+                    if (board[y,x] != 0 && board[y, x] != null)
                     {
                         pieces.Add (board[y,x]);
                         piecePos.Add(y * 8 + x);
@@ -1467,12 +1467,15 @@ namespace Chess_Tablebase
                     {
                         case 14:
                             tableIndex += piecePos[i] * squared64;
+                            //MessageBox.Show("White King at " + Convert.ToString(piecePos[i]));
                             break;
                         case 6:
                             tableIndex += piecePos[i] * 64;
+                            //MessageBox.Show("Black King at " + Convert.ToString(piecePos[i]));
                             break;
                         default:
                             tableIndex += piecePos[i];
+                            //MessageBox.Show("Piece at " + Convert.ToString(piecePos[i]));
                             break;
                     }
                 }
@@ -2458,7 +2461,7 @@ namespace Chess_Tablebase
 
         private void btnGen_Click(object sender, EventArgs e)
         {
-            List<board> nextMoves = GenerateAllMoves(myGlobals.board, "white");
+            List<board> nextMoves = GenerateAllMoves(myGlobals.board, "black");
 
             for (int i = 0; i < nextMoves.Count; i++)
             {
@@ -2515,7 +2518,10 @@ namespace Chess_Tablebase
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    flippedBoard[7 - y, x] = (board[y, x] + 8) % 16;
+                    if (board[y, x] != 0)
+                    {
+                        flippedBoard[7 - y, x] = (board[y, x] + 8)%16;
+                    }
                 }
             }
 
@@ -2642,7 +2648,7 @@ namespace Chess_Tablebase
 
             return Name;
         }
-        public int displayMoves(int[,] board)
+        public int displayMoves(int[,] board, bool flipB) // broken
         {
             string colour = "black";
             string nameMove = "";
@@ -2663,7 +2669,14 @@ namespace Chess_Tablebase
             {
                 //updateDisplay(nextPositions[i].pos);
                 nameMove = moveName(board, nextPositions[i].pos);
-                tableBaseIndex = generateTBIndex(nextPositions[i].pos);
+                if (flipB)
+                {
+                    tableBaseIndex = generateTBIndex(flip(nextPositions[i].pos));
+                }
+                else
+                {
+                    tableBaseIndex = generateTBIndex(nextPositions[i].pos);
+                }
 
                 if (nextPositions[i].tableIndex != -1)
                 {
@@ -2681,13 +2694,18 @@ namespace Chess_Tablebase
                     score = -1;
                 }
                 names[i] = nameMove;
-                scores[i] = score;
+                if (flipB)
+                {
+                    scores[i] = -1*score;
+                }
+                else
+                {
+                    scores[i] = score;
+                }
             }
 
             int tempInt;
             string tempString;
-
-            MessageBox.Show(Convert.ToString(nextPositions.Count));
 
             for (int i = 0; i < nextPositions.Count-1; i++)   //bubble sort OMEGALUL
             {
@@ -2732,8 +2750,18 @@ namespace Chess_Tablebase
                     case 1000:
                         Evaluation = "Checkmate";
                         break;
+                    case -9999:
+                        Evaluation = "wtf";
+                        break;
                     default:
-                        Evaluation = "DTM " + Convert.ToString(1000 - scores[i]);
+                        if (flipB)
+                        {
+                            Evaluation = "DTM " + Convert.ToString(1000 + scores[i]);
+                        }
+                        else
+                        {
+                            Evaluation = "DTM " + Convert.ToString(1000 - scores[i]);
+                        }
                         break;
                 }
 
@@ -2752,13 +2780,13 @@ namespace Chess_Tablebase
             return 0;
         }
 
-        private void btnEvaluate_Click(object sender, EventArgs e)
+        private void btnEvaluate_Click(object sender, EventArgs e)   //not broken apart from display moves
         {
             bool flipBoard = false;
             int[] tableBaseIndex;
             int Eval;
             int[,] board = copyPos(myGlobals.board);
-
+            int[,] flippedBoard = flip(board);
 
             for (int y = 0; y <8; y++)
             {
@@ -2773,12 +2801,12 @@ namespace Chess_Tablebase
 
             if (flipBoard)
             {
-                MessageBox.Show("x");
-                board = flip(board);        
+                tableBaseIndex = generateTBIndex(flippedBoard);
             }
-
+            else
+            {
                 tableBaseIndex = generateTBIndex(board);
-
+            }
 
             lstMoveEvals.Items.Clear();
 
@@ -2788,7 +2816,7 @@ namespace Chess_Tablebase
                 {
                     lblWhiteEval.Text = Convert.ToString(myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval);
                     lblBlackEval.Text = Convert.ToString(myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval);
-                    if (myGlobals.ColToMove == 8)
+                    if ((myGlobals.ColToMove == 8 && !flipBoard) || (myGlobals.ColToMove == 0 && flipBoard))
                     {
                         Eval = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval;
                     }
@@ -2807,32 +2835,39 @@ namespace Chess_Tablebase
                 {
                     case 0:
                         lblEval.Text = "Draw";
-                        displayMoves(myGlobals.board);
+                        displayMoves(myGlobals.board, flipBoard);
                         break;
                     case 1000:
-                        lblEval.Text = "White won by checkmate";
+                        if (flipBoard)
+                        {
+                            lblEval.Text = "Black won by checkmate";
+
+                        }
+                        else
+                        {
+                            lblEval.Text = "White won by checkmate";
+                        }
                         break;
                     case 9999:
                     case -9999:
                         lblEval.Text = "Invalid position";
                         break;
                     default:
-                        if (Eval > 0)
+                        if (!flipBoard)
                         {
                             lblEval.Text = "White is winning:    DTM " + Convert.ToString(1000 - Eval);
                         }
                         else
                         {
-                            lblEval.Text = "Black is winning:    DTM " + Convert.ToString(Eval + 1000);
+                            lblEval.Text = "Black is winning:    DTM " + Convert.ToString(1000 - Eval);
                         }
-                        displayMoves(myGlobals.board);
+                        displayMoves(myGlobals.board, flipBoard);
                         break;
                 }
             }
             else
             {
                 lblEval.Text = "Draw by insufficient material";
-                displayMoves(myGlobals.board);
             }
 
 
@@ -2849,6 +2884,11 @@ namespace Chess_Tablebase
                 MessageBox.Show(Convert.ToString(i));
             }
             MessageBox.Show("done");
+        }
+
+        private void btnFlip_Click(object sender, EventArgs e)
+        {
+            updateDisplay(flip(myGlobals.board));
         }
     }
     }

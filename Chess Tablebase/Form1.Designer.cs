@@ -144,6 +144,7 @@
             this.btnUndo = new System.Windows.Forms.Button();
             this.btnCompare = new System.Windows.Forms.Button();
             this.btnUndoW = new System.Windows.Forms.Button();
+            this.btnFlip = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -1527,12 +1528,23 @@
             this.btnUndoW.UseVisualStyleBackColor = true;
             this.btnUndoW.Click += new System.EventHandler(this.btnUndoW_Click);
             // 
+            // btnFlip
+            // 
+            this.btnFlip.Location = new System.Drawing.Point(1089, 599);
+            this.btnFlip.Name = "btnFlip";
+            this.btnFlip.Size = new System.Drawing.Size(75, 23);
+            this.btnFlip.TabIndex = 105;
+            this.btnFlip.Text = "flip";
+            this.btnFlip.UseVisualStyleBackColor = true;
+            this.btnFlip.Click += new System.EventHandler(this.btnFlip_Click);
+            // 
             // frmBoard
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1248, 662);
+            this.Controls.Add(this.btnFlip);
             this.Controls.Add(this.btnUndoW);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.btnCompare);
@@ -1700,5 +1712,6 @@
         private Button btnUndo;
         private Button btnCompare;
         private Button btnUndoW;
+        private Button btnFlip;
     }
 }
