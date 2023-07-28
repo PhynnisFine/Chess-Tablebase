@@ -101,7 +101,7 @@ namespace Chess_Tablebase
             myGlobals.ColToMove = 0;
             readTablebase("KQvK.txt", 0);
             readTablebase("KRvK.txt", 1);
-            //readTablebase("KPvK.txt", 2);
+            readTablebase("KPvK.txt", 2);
             MessageBox.Show("Finished reading tablebase from files");
 
             myGlobals.buttonArray[0, 0] = btn0;
@@ -2377,7 +2377,7 @@ namespace Chess_Tablebase
 
             //write to file
 
-            StreamWriter sw = new StreamWriter(TableName + ".txt");
+            StreamWriter sw = new StreamWriter("..\\..\\..\\..\\Tablebase_files\\"+TableName + ".txt");
             string FEN = "";
 
             for (int i = 0; i < AllPositions.Length; i++)
@@ -2683,7 +2683,7 @@ namespace Chess_Tablebase
 
                 if (nextPositions[i].tableIndex != -1)
                 {
-                    if (colour == "black")
+                    if ((colour == "black" && !flipB) || (colour == "white" && flipB))
                     {
                         score = myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval;
                     }
@@ -2753,9 +2753,6 @@ namespace Chess_Tablebase
                     case 1000:
                         Evaluation = "Checkmate";
                         break;
-                    case -9999:
-                        Evaluation = "wtf";
-                        break;
                     default:
                         if (flipB)
                         {
@@ -2813,6 +2810,7 @@ namespace Chess_Tablebase
 
             lstMoveEvals.Items.Clear();
 
+            //MessageBox.Show(Convert.ToString(tableBaseIndex[0]) + "   " + Convert.ToString(tableBaseIndex[1]));
             if (tableBaseIndex[1] != -1)
             {
                 if (myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].WhiteEval != 9999 || myGlobals.Tablebase[tableBaseIndex[0], tableBaseIndex[1]].BlackEval != 9999)
