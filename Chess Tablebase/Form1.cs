@@ -42,6 +42,9 @@ namespace Chess_Tablebase
 
         public int readTablebase(string filename, int tableNum)
         {
+            //files need to be stored 4 levels up so that they show up on the github page
+            filename = "..\\..\\..\\..\\Tablebase_files\\" + filename;
+
             try
             {
                 StreamReader sr = new StreamReader(filename);
