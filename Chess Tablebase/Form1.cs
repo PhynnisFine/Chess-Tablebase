@@ -98,7 +98,7 @@ namespace Chess_Tablebase
             myGlobals.ColToMove = 0;
             readTablebase("KQvK.txt", 0);
             readTablebase("KRvK.txt", 1);
-            readTablebase("KPvK.txt", 2);
+            //readTablebase("KPvK.txt", 2);
             MessageBox.Show("Finished reading tablebase from files");
 
             myGlobals.buttonArray[0, 0] = btn0;
@@ -2300,7 +2300,7 @@ namespace Chess_Tablebase
                     foundAny = true;
                 }
 
-                //MessageBox.Show("Mate in " + Convert.ToString(X+1) + " positions = " + Convert.ToString(MateinXPlus1.Count));
+               // MessageBox.Show("Mate in " + Convert.ToString(X+1) + " positions = " + Convert.ToString(MateinXPlus1.Count));
 
                 MateinX.Clear();
                 PMateinX.Clear();
@@ -2318,7 +2318,7 @@ namespace Chess_Tablebase
                     }
                 }
 
-              //MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
+             // MessageBox.Show("Potential mate in " + Convert.ToString(X+2) + " positions = " + Convert.ToString(PMateinX.Count));
 
                 if (dependencies)
                 {
@@ -2355,9 +2355,9 @@ namespace Chess_Tablebase
                             {
                                 MateinX.Add(PMateinX[PXIndex]);
                                 AllPositions[PMateinX[PXIndex].tableIndex].BlackEval = 1000 - (X + 2);
-                            //updateDisplay(AllPositions[PMateinX[PXIndex].tableIndex].board);
-                            //lblBlackEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].BlackEval);
-                            //lblWhiteEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].WhiteEval);
+                            updateDisplay(AllPositions[PMateinX[PXIndex].tableIndex].board);
+                            lblBlackEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].BlackEval);
+                            lblWhiteEval.Text = Convert.ToString(AllPositions[PMateinX[PXIndex].tableIndex].WhiteEval);
                         }
                         }                 
                 }
