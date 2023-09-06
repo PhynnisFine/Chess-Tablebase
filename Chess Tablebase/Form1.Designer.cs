@@ -1146,6 +1146,7 @@
             this.lstMoveEvals.Name = "lstMoveEvals";
             this.lstMoveEvals.Size = new System.Drawing.Size(208, 504);
             this.lstMoveEvals.TabIndex = 2;
+            this.lstMoveEvals.SelectedIndexChanged += new System.EventHandler(this.lstMoveEvals_SelectedIndexChanged);
             // 
             // btnEvaluate
             // 

@@ -16,10 +16,10 @@ namespace Chess_Tablebase
             public static int[,] board = new int[8, 8];
             public static int selectedPiece = -1;
             public static int ColToMove = 8;
-            public static List<board> givenPositions = new List<board>();
             public static Position[,] Tablebase = new Position[3,262144];
             public static int selectedSquare = -1;
             public static string[] tables = new string[] {"KQvK", "KRvK", "KPvK" };
+            public static List<board> displayedMoves = new List<board>();
         }
 
         public class Position
@@ -2847,28 +2847,6 @@ namespace Chess_Tablebase
 
         private void btnCompare_Click(object sender, EventArgs e)
         {
-            board nextBoard = addPos(myGlobals.board);
-            nextBoard.tableIndex = generateIndex(nextBoard.pos);
-            MessageBox.Show(Convert.ToString(nextBoard.tableIndex));
-            bool dupe = false;
-
-            for (int i = 0; i < myGlobals.givenPositions.Count; i++)
-            {
-                if (myGlobals.givenPositions[i].tableIndex == nextBoard.tableIndex)
-                {
-                    dupe = true;
-                }
-            }
-
-            if (!dupe)
-            {
-                myGlobals.givenPositions.Add(nextBoard);
-                MessageBox.Show("New position " + Convert.ToString(myGlobals.givenPositions.Count));
-            }
-            else
-            {
-                MessageBox.Show("Positions already in list " + Convert.ToString(myGlobals.givenPositions.Count));
-            }
         }
 
         //--------------------------------UI Position Evaluation Button-----------------------//
@@ -3072,6 +3050,7 @@ namespace Chess_Tablebase
 
             int tempInt;
             string tempString;
+            board tempBoard;
 
             for (int i = 0; i < nextPositions.Count-1; i++)   //bubble sort OMEGALUL
             {
@@ -3079,28 +3058,43 @@ namespace Chess_Tablebase
                 {
                     if (scores[j] < scores[j + 1] && myGlobals.ColToMove == 8)
                     {
+                        tempBoard = nextPositions[j];
+                        nextPositions[j] = nextPositions[j + 1];
+                        nextPositions[j+1] = addPos(tempBoard.pos);
 
                         tempInt = scores[j];
                         scores[j] = scores[j + 1];
                         scores[j + 1] = tempInt;
+
                         tempString = names[j];
                         names[j] = names[j + 1];
                         names[j + 1] = tempString;
                     }
                     else if (scores[j+1] < scores[j] && myGlobals.ColToMove == 0)
                     {
+                        tempBoard = nextPositions[j+1];
+                        nextPositions[j+1] = nextPositions[j];
+                        nextPositions[j] = addPos(tempBoard.pos);
+
                         tempInt = scores[j +1];
                         scores[j+1] = scores[j];
                         scores[j] = tempInt;
+
                         tempString = names[j+1];
                         names[j+1] = names[j];
                         names[j] = tempString;
                     }
-
                 }
             }
 
-            string ToAdd;
+            myGlobals.displayedMoves.Clear();
+            for (int i = 0; i < nextPositions.Count; i++)
+            {
+                myGlobals.displayedMoves.Add(nextPositions[i]);
+            }
+
+
+                string ToAdd;
 
             for (int i = 0; i < nextPositions.Count; i++)
             {
@@ -3234,8 +3228,6 @@ namespace Chess_Tablebase
                 lblEval.Text = "Draw by insufficient material";
             }
 
-
-
         }
 
         private void btnUndoW_Click(object sender, EventArgs e)
@@ -3253,6 +3245,30 @@ namespace Chess_Tablebase
         private void btnFlip_Click(object sender, EventArgs e)
         {
             updateDisplay(flip(myGlobals.board));
+        }
+
+        //updates the display to the position after a selected move displayed in the list box is played
+
+
+        private void lstMoveEvals_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (myGlobals.displayedMoves.Count != 0)
+            {
+                myGlobals.board = copyPos((myGlobals.displayedMoves[lstMoveEvals.SelectedIndex]).pos);
+                updateDisplay(myGlobals.board);
+                if (myGlobals.ColToMove == 0)
+                {
+                    btnWhiteToMove.BackColor = Color.Gray;
+                    btnBlackToMove.BackColor = Color.LightGray;
+                    myGlobals.ColToMove = 8;
+                }
+                else
+                {
+                    btnWhiteToMove.BackColor = Color.LightGray;
+                    btnBlackToMove.BackColor = Color.Gray;
+                    myGlobals.ColToMove = 0;
+                }
+            }
         }
     }
     }
