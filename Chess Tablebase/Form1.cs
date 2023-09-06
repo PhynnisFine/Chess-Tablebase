@@ -3108,6 +3108,7 @@ namespace Chess_Tablebase
                         Evaluation = "Draw";
                         break;
                     case 1000:
+                    case -1000:
                         Evaluation = "Checkmate";
                         break;
                     default:
@@ -3137,7 +3138,7 @@ namespace Chess_Tablebase
             return 0;
         }
 
-        private void btnEvaluate_Click(object sender, EventArgs e)   //not broken apart from display moves
+        public int Evaluate()
         {
             bool flipBoard = false;
             int[] tableBaseIndex;
@@ -3145,11 +3146,11 @@ namespace Chess_Tablebase
             int[,] board = copyPos(myGlobals.board);
             int[,] flippedBoard = flip(board);
 
-            for (int y = 0; y <8; y++)
+            for (int y = 0; y < 8; y++)
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (board[y,x] < 8 && board[y,x] != 0 && board[y, x]!=6)
+                    if (board[y, x] < 8 && board[y, x] != 0 && board[y, x] != 6)
                     {
                         flipBoard = true;
                     }
@@ -3228,6 +3229,12 @@ namespace Chess_Tablebase
                 lblEval.Text = "Draw by insufficient material";
             }
 
+            return 0;
+        }
+
+        private void btnEvaluate_Click(object sender, EventArgs e)   //not broken apart from display moves
+        {
+            Evaluate();
         }
 
         private void btnUndoW_Click(object sender, EventArgs e)
@@ -3268,6 +3275,7 @@ namespace Chess_Tablebase
                     btnBlackToMove.BackColor = Color.Gray;
                     myGlobals.ColToMove = 0;
                 }
+                Evaluate();
             }
         }
     }
